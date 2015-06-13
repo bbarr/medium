@@ -1,0 +1,11 @@
+{
+  "name": "chunnel",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --watch --compilers js:babel/register"
+  },
+  "author": "",
+  "license": "ISC"
+}
