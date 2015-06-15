@@ -1,5 +1,6 @@
 
 import assert from 'assert'
+import sinon from 'sinon'
 
 import csp from '../lib/index'
 
@@ -60,22 +61,45 @@ describe('channels', () => {
 		it ('should park and wait if no pending put value', (cb) => {
 
 			var ch = chan()
-			var val = 1;
+			var spy = sinon.spy()
 
 			go(async function() {
 				val = await take(ch)
+				spy()
 			})
 
 			process.nextTick(() => {
-				assert(val === 1)
+				assert(!spy.called)
 				cb()
 			})
 		})
 	})
 
 	describe('put()', () => {
+		
 		it ('should return a promise', () => {
 			assert(put(chan()) instanceof Promise)
+		})
+
+		it ('should delegate to buffer', () => {
+			var ch = chan()
+			var spy = sinon.spy(ch.buffer, 'push')
+			put(ch, 1)
+			assert(spy.calledOnce)
+		})
+
+		it ('should resolve put immediately if there is a pending take', () => {
+
+			var ch = chan()
+			var spy = sinon.spy(ch.buffer, 'push')
+			
+			// pending take
+			take(ch)
+
+			// put will be executed, not queued
+			put(ch, 1)
+
+			assert(!spy.called)
 		})
 	})
 
@@ -103,7 +127,7 @@ describe('channels', () => {
 
 	describe('close()', () => {
 		it ('should set channel closed property to true', () => {
-			let ch = chan()
+			var ch = chan()
 			assert(!ch.closed)
 			close(ch)
 			assert(ch.closed)
@@ -112,9 +136,9 @@ describe('channels', () => {
 
 	describe('go()', () => {
 		it ('should immediately invoke given function', () => {
-			let called = false
-			go(() => called = true)
-			assert(called)
+			var spy = sinon.spy()
+			go(spy)
+			assert(spy.called)
 		})
 	})
 })

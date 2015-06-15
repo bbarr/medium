@@ -7,5 +7,8 @@
     "test": "mocha --watch --compilers js:babel/register"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "sinon": "^1.15.3"
+  }
 }
