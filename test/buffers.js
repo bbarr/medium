@@ -79,4 +79,68 @@ describe('channels', () => {
 			})
 		})
 	})
+
+  describe('dropping', () => {
+
+    describe('when there is room', () => {
+      
+      it ('should immediately release', () => {
+				var buffer = buffers.dropping(2)
+				var action = actionStub()
+				var spy = sinon.spy(action, 'resolve')
+				buffer.push(action)
+				assert(spy.calledWith(true))
+      })
+    })
+
+    describe('when there is not room', () => {
+
+      it ('should resolve, drop the put and ignore it', () => {
+        var buffer = buffers.dropping(2)
+        buffer.push(actionStub())
+        buffer.push(actionStub())
+        var extra = actionStub()
+        var spy = sinon.spy(extra, 'resolve')
+        buffer.push(extra)
+        assert(spy.called)
+        assert(buffer.released.length === 2)
+      })
+    })
+  })
+
+  describe('sliding', () => {
+
+    describe('when there is room', () => {
+      
+      it ('should immediately release', () => {
+				var buffer = buffers.sliding(2)
+				var action = actionStub()
+				var spy = sinon.spy(action, 'resolve')
+				buffer.push(action)
+				assert(spy.calledWith(true))
+      })
+    })
+
+    describe('when there is not room', () => {
+
+      it ('should drop the oldest and accept the new one', () => {
+        var buffer = buffers.sliding(2)
+        var first = actionStub()
+        buffer.push(first)
+        var second = actionStub()
+        buffer.push(second)
+
+        assert(buffer.released[0] === first)
+        assert(buffer.released[1] === second)
+
+        var third = actionStub()
+        var spy = sinon.spy(third, 'resolve')
+        buffer.push(third)
+        assert(spy.called)
+
+        assert(buffer.released[0] === second)
+        assert(buffer.released[1] === third)
+      })
+    })
+  })
 })
