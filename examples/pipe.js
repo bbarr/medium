@@ -9,12 +9,12 @@ var inc = (n) => n + 1
 
 var ch1 = chan()
 var ch2 = chan(10, t.filter(isEven))
-var ch3 = chan()
+var ch3 = chan(10, t.map(inc))
 pipe(ch1, ch2)
-pipe(ch2, ch3, t.map(inc))
+pipe(ch2, ch3)
 
 go(async function() {
-  while(true) {
+  while (true) {
     console.log(await take(ch3))
   }
 })
