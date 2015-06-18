@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "sinon": "^1.15.3"
+    "sinon": "^1.15.3",
+    "transducers-js": "^0.4.174"
   }
 }

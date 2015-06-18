@@ -27,5 +27,3 @@ go(async function() {
   console.log('and is released immediately')
 
 })
-
-

@@ -128,3 +128,33 @@ go(async function() {
 
 })
 ```
+
+##Advanced
+
+###Pipe
+
+import channels from 'channels'
+import t from 'transducers-js'
+
+var { go, chan, take, put, sleep, buffers, pipe } = channels
+
+var allowEvens = t.filter((n) => n % 2)
+var inc = t.map((n) => n + 1)
+
+var ch1 = chan()
+var ch2 = chan(allowEvens)
+
+var ch3 = pipe(ch1, ch2, inc)
+
+go(async function() {
+  while(true) {
+    console.log(await take(evensCh))
+  }
+})
+
+put(ch, 1)
+put(ch, 2)
+put(ch, 3)
+put(ch, 4)
+put(ch, 5)
+
