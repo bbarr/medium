@@ -131,30 +131,54 @@ go(async function() {
 
 ##Advanced
 
-###Pipe
+###Transducers
+You can use transducers!
 
-import channels from 'channels'
+```javascript
+import channels from '../lib/index'
 import t from 'transducers-js'
 
 var { go, chan, take, put, sleep, buffers, pipe } = channels
 
-var allowEvens = t.filter((n) => n % 2)
-var inc = t.map((n) => n + 1)
-
-var ch1 = chan()
-var ch2 = chan(allowEvens)
-
-var ch3 = pipe(ch1, ch2, inc)
+var allowEven = t.filter((n) => n % 2 === 0)
+var ch = chan(2, allowEven)
 
 go(async function() {
-  while(true) {
-    console.log(await take(evensCh))
-  }
+  console.log(await take(ch))
+  console.log(await take(ch))
 })
 
 put(ch, 1)
 put(ch, 2)
 put(ch, 3)
-put(ch, 4)
-put(ch, 5)
+```
 
+###Pipe
+
+```javascript
+import channels from '../lib/index'
+import t from 'transducers-js'
+
+var { go, chan, take, put, sleep, buffers, pipe } = channels
+
+var isEven = (n) => n % 2 === 0
+var inc = (n) => n + 1
+
+var ch1 = chan()
+var ch2 = chan(10, t.filter(isEven))
+var ch3 = chan(10, t.map(inc))
+pipe(ch1, ch2)
+pipe(ch2, ch3)
+
+go(async function() {
+  while (true) {
+    console.log(await take(ch3))
+  }
+})
+
+put(ch1, 1)
+put(ch1, 2)
+put(ch1, 3)
+put(ch1, 4)
+put(ch1, 5)
+```
