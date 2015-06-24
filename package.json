@@ -1,12 +1,21 @@
 {
-  "name": "chunnel",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "medium",
+  "version": "0.0.1",
+  "description": "CSP-style channel library using ES7 async/await keywords",
+  "main": "./index.js",
   "scripts": {
     "test": "mocha --watch --compilers js:babel/register"
   },
-  "author": "",
+  "keywords": [
+    "CSP",
+    "channels",
+    "async"
+  ],
+  "author": {
+    "name": "Brendan Barr",
+    "email": "bbarr1384@gmail.com",
+    "url": "http://replwithoutacause.com"
+  },
   "license": "ISC",
   "devDependencies": {
     "sinon": "^1.15.3",
