@@ -2,7 +2,8 @@
 import channels from '../lib/index'
 import t from 'transducers-js'
 
-var { go, chan, take, put, sleep, buffers, pipe } = channels
+var { go, chan, take, put, sleep, buffers, fns } = channels
+var pipe = fns.pipe
 
 var isEven = (n) => n % 2 === 0
 var inc = (n) => n + 1

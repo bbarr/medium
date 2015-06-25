@@ -6,6 +6,10 @@
   "scripts": {
     "test": "mocha --watch --compilers js:babel/register"
   },
+  "repository": { 
+    "type": "git", 
+    "url": "https://github.com/bbarr/medium"
+  },
   "keywords": [
     "CSP",
     "channels",
