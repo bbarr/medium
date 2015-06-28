@@ -8,138 +8,138 @@ var { sleep, chan, go, put, take, close } = csp
 
 describe('channels', () => {
 
-	describe('take()', () => {
+  describe('take()', () => {
 
-		it ('should return a promise', () => {
-			assert(put(chan()) instanceof Promise)
-		})
+    it ('should return a promise', () => {
+      assert(put(chan()) instanceof Promise)
+    })
 
-		it ('should deliver oldest put value', (cb) => {
+    it ('should deliver oldest put value', (cb) => {
 
-			var ch = chan()
-			put(ch, 1)
-			put(ch, 2)
+      var ch = chan()
+      put(ch, 1)
+      put(ch, 2)
 
-			var expected;
+      var expected;
 
-			take(ch).then((val) => expected = val)
+      take(ch).then((val) => expected = val)
 
-			process.nextTick(() => {
-				assert(expected === 1)
-				cb()
-			})
-		})
+      process.nextTick(() => {
+        assert(expected === 1)
+        cb()
+      })
+    })
 
-		it ('should work in async function', (cb) => {
+    it ('should work in async function', (cb) => {
 
-			var ch = chan()
-			put(ch, 1)
-			put(ch, 2)
+      var ch = chan()
+      put(ch, 1)
+      put(ch, 2)
 
-			var test = async function() {
-				var val = await take(ch)
-				assert(val === 1)
-				cb()
-			}
+      var test = async function() {
+        var val = await take(ch)
+        assert(val === 1)
+        cb()
+      }
 
-			test()
-		})
+      test()
+    })
 
-		it ('should work in a go-block', (cb) => {
+    it ('should work in a go-block', (cb) => {
 
-			var ch = chan()
-			put(ch, 1)
-			put(ch, 2)
+      var ch = chan()
+      put(ch, 1)
+      put(ch, 2)
 
-			go(async function() {
-				var val = await take(ch)
-				assert(val === 1)
-				cb()
-			})
-		})
+      go(async function() {
+        var val = await take(ch)
+        assert(val === 1)
+        cb()
+      })
+    })
 
-		it ('should park and wait if no pending put value', (cb) => {
+    it ('should park and wait if no pending put value', (cb) => {
 
-			var ch = chan()
-			var spy = sinon.spy()
+      var ch = chan()
+      var spy = sinon.spy()
 
-			go(async function() {
-				val = await take(ch)
-				spy()
-			})
+      go(async function() {
+        val = await take(ch)
+        spy()
+      })
 
-			process.nextTick(() => {
-				assert(!spy.called)
-				cb()
-			})
-		})
-	})
+      process.nextTick(() => {
+        assert(!spy.called)
+        cb()
+      })
+    })
+  })
 
-	describe('put()', () => {
-		
-		it ('should return a promise', () => {
-			assert(put(chan()) instanceof Promise)
-		})
+  describe('put()', () => {
 
-		it ('should delegate to buffer', () => {
-			var ch = chan()
-			var spy = sinon.spy(ch.buffer, 'push')
-			put(ch, 1)
-			assert(spy.calledOnce)
-		})
+    it ('should return a promise', () => {
+      assert(put(chan()) instanceof Promise)
+    })
 
-		it ('should resolve put immediately if there is a pending take', () => {
+    it ('should delegate to buffer', () => {
+      var ch = chan()
+      var spy = sinon.spy(ch.buffer, 'push')
+      put(ch, 1)
+      assert(spy.calledOnce)
+    })
 
-			var ch = chan()
-			var spy = sinon.spy(ch.buffer, 'push')
-			
-			// pending take
-			take(ch)
+    it ('should resolve put immediately if there is a pending take', () => {
 
-			// put will be executed, not queued
-			put(ch, 1)
+      var ch = chan()
+      var spy = sinon.spy(ch.buffer, 'push')
 
-			assert(!spy.called)
-		})
-	})
+      // pending take
+      take(ch)
 
-	describe('sleep()', () => {
-		it ('should sleep for given ms', (cb) => {
+      // put will be executed, not queued
+      put(ch, 1)
 
-			var ch = chan()
-			var subject = 1
+      assert(!spy.called)
+    })
+  })
 
-			go(async function() {
-				await sleep(1000)
-				subject = 2
-			})
+  describe('sleep()', () => {
+    it ('should sleep for given ms', (cb) => {
 
-			setTimeout(() => {
-				assert(subject === 1)
-				setTimeout(() => {
-					assert(subject === 2)
-					cb()
-				}, 600)
-			}, 600)
+      var ch = chan()
+      var subject = 1
 
-		})
-	})
+      go(async function() {
+        await sleep(1000)
+        subject = 2
+      })
 
-	describe('close()', () => {
-		it ('should set channel closed property to true', () => {
-			var ch = chan()
-			assert(!ch.closed)
-			close(ch)
-			assert(ch.closed)
-		})
-	})
+      setTimeout(() => {
+        assert(subject === 1)
+        setTimeout(() => {
+          assert(subject === 2)
+          cb()
+        }, 600)
+      }, 600)
 
-	describe('go()', () => {
-		it ('should immediately invoke given function', () => {
-			var spy = sinon.spy()
-			go(spy)
-			assert(spy.called)
-		})
-	})
+    })
+  })
+
+  describe('close()', () => {
+    it ('should set channel closed property to true', () => {
+      var ch = chan()
+      assert(!ch.closed)
+      close(ch)
+      assert(ch.closed)
+    })
+  })
+
+  describe('go()', () => {
+    it ('should immediately invoke given function', () => {
+      var spy = sinon.spy()
+      go(spy)
+      assert(spy.called)
+    })
+  })
 })
 
