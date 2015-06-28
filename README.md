@@ -159,7 +159,8 @@ put(ch, 3)
 import channels from '../lib/index'
 import t from 'transducers-js'
 
-var { go, chan, take, put, sleep, buffers, pipe } = channels
+var { go, chan, take, put, ops } = channels
+var pipe = ops.pipe
 
 var isEven = (n) => n % 2 === 0
 var inc = (n) => n + 1
@@ -172,6 +173,7 @@ pipe(ch2, ch3)
 
 go(async function() {
   while (true) {
+    // will log 3, 5
     console.log(await take(ch3))
   }
 })
@@ -182,3 +184,38 @@ put(ch1, 3)
 put(ch1, 4)
 put(ch1, 5)
 ```
+
+###Mult
+
+```javascript
+import channels from '../lib/index'
+
+var { go, chan, take, put, ops } = channels
+var mult = ops.mult
+
+var ch1 = mult(chan())
+var ch2 = chan()
+var ch3 = chan()
+
+mult.tap(ch1, ch2)
+mult.tap(ch1, ch3)
+
+go(async function() {
+  while (true) {
+    // will log 1, 2, 3, 4, 5
+    console.log(await take(ch2))
+  }
+})
+
+go(async function() {
+  while (true) {
+    // will log 1, 2, 3, 4, 5
+    console.log(await take(ch3))
+  }
+})
+
+put(ch1, 1)
+put(ch1, 2)
+put(ch1, 3)
+put(ch1, 4)
+put(ch1, 5)
