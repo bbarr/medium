@@ -1,48 +1,65 @@
-# channels
+# Medium
 CSP-style channel library using ES7 async/await keywords
 
-###Work in progress - Not stable!
+####Why another CSP library?
+Well, first, there is currently only one with any traction ([js-csp](https://github.com/ubolonton/js-csp)), so another interpretation can't hurt. Second, Medium tries to take CSP further into the future by embracing ES7 async/await as well as the trend towards promises as the primary asynchronous abstraction. Relying on romises means that we can easily interact with other generator libraries like Koa.
 
-##An example
+####Let's, start with a trivial example
 
 ```javascript
 
 import channels from 'channels'
 
-var { go, chan, take, put, sleep, buffers } = channels
+var { go, chan, take, put, sleep } = channels
 
 var ch = chan()
 
 go(async function() {
   while (true) {
-    var val = await take(ch)
-    console.log('some val was given to ch', val)
+    // will print 1, wait 200ms, print 2
+    console.log(await take(ch))
   }
 })
 
 go(async function() {
-  await sleep(200)
   await put(ch, 1)
   await sleep(200)
   await put(ch, 2)
-  await sleep(200)
-  await put(ch, 3)
 })
 ```
 
-##Type of buffers
+We can also interact with channels outside go/async blocks.
 
-###Fixed
+```javascript
 
-A fixed buffer immediately accepts N values. These values release their ```put```s and queue up waiting for a respective ```take```.
-When it has reached N values, it begins to queue up and will park an async functions until there is space for them.
+import channels from 'channels'
+
+var { chan, take, put } = channels
+
+var ch = chan()
+
+take(ch).then((val) => console.log('taking: ', val))
+put(ch, 'hi').then(() => console.log('we put!'))
+
+// will print, in this order:
+// 'we put!'
+// 'taking: hi'
+```
+
+####Buffers
+By default, a channel will block a put until a corrosponding take shows up. Buffers are a way to define different strategies for handling this behavior.
+
+####Fixed
+
+A fixed buffer immediately accepts N puts. These ```put``` actions have their promises resolved with ```true``` and queue up their value for a respective ```take```.
+When it has reached N values, it begins to buffer and will park a ```put``` action until there is space for its value.
 
 ```javascript
 import channels from 'channels'
 
 var { go, chan, take, put, sleep, buffers } = channels
 
-var ch = chan(2)
+var ch = chan(buffers.fixed(2)) // alias chan(2)
 
 go(async function() {
 
@@ -58,7 +75,7 @@ go(async function() {
 
 go(async function() {
 
-  await timeout(1000)
+  await sleep(1000)
 
   // this take() will create room for the 3
   await take(ch)
@@ -219,3 +236,26 @@ put(ch1, 2)
 put(ch1, 3)
 put(ch1, 4)
 put(ch1, 5)
+```
+
+##API 
+
+###chan(numOrBuffer, xducer)
+###put(ch, val)
+###take(ch)
+###go(async function)
+###sleep(ms)
+###close(ch)
+###buffers
+- ####unbuffered()
+- ####fixed(num)
+- ####sliding(num)
+- ####dropping(num)
+
+###Ops
+- ####pipe(srcCh, destCh)
+- ####mult(ch)
+  - ####tap(srcCh, destCh)
+  - ####untap(srcCh, destCh)
+
+
