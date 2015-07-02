@@ -1,6 +1,14 @@
 # Medium
 CSP-style channel library using ES7 async/await keywords
 
+####Installation
+
+```javascript
+npm install medium
+```
+
+Requires BabelJS, of course, for ES7 support.
+
 ####Why another CSP library?
 Well, first, there is currently only one with any traction ([js-csp](https://github.com/ubolonton/js-csp)), so another interpretation can't hurt. Second, Medium tries to take CSP further into the future by embracing ES7 async/await as well as the trend towards promises as the primary asynchronous abstraction. Relying on romises means that we can easily interact with other generator libraries like Koa.
 
@@ -247,15 +255,15 @@ put(ch1, 5)
 ###sleep(ms)
 ###close(ch)
 ###buffers
-- ####unbuffered()
-- ####fixed(num)
-- ####sliding(num)
-- ####dropping(num)
+- unbuffered()
+- fixed(num)
+- sliding(num)
+- dropping(num)
 
 ###Ops
-- ####pipe(srcCh, destCh)
-- ####mult(ch)
-  - ####tap(srcCh, destCh)
-  - ####untap(srcCh, destCh)
+- pipe(srcCh, destCh)
+- mult(ch)
+  - tap(srcCh, destCh)
+  - untap(srcCh, destCh)
 
 
