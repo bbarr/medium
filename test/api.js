@@ -4,7 +4,7 @@ import sinon from 'sinon'
 
 import csp from '../lib/index'
 
-var { sleep, chan, go, put, take, close } = csp
+var { sleep, chan, go, put, take, ops, close, CLOSED } = csp
 
 describe('channels', () => {
 
@@ -126,11 +126,46 @@ describe('channels', () => {
   })
 
   describe('close()', () => {
+
     it ('should set channel closed property to true', () => {
       var ch = chan()
       assert(!ch.closed)
       close(ch)
       assert(ch.closed)
+    })
+
+    it ('should cause all puts to resolve to false immediately', (cb) => {
+      var ch = chan()
+      close(ch)
+      put(ch, 2)
+        .then((val) => assert(val === false))
+        .then(cb)
+    })
+
+    it ('should cause all takes to resolve with CLOSED constant value immediately', (cb) => {
+      var ch = chan()
+      close(ch)
+      take(ch, 2)
+        .then((val) => assert(val === CLOSED))
+        .then(cb)
+    })
+
+    it ('should cause all pending takes to resolve with CLOSED constant immediately', (cb) => {
+      var ch = chan()
+      var taken = take(ch)
+      close(ch)
+      taken
+        .then((val) => assert(val === CLOSED))
+        .then(cb)
+    })
+
+    it ('should cause all pending puts in buffer to resolve with false immediately', (cb) => {
+      var ch = chan()
+      var putted = put(ch, 2)
+      close(ch)
+      putted
+        .then((val) => assert(val === false))
+        .then(cb)
     })
   })
 
@@ -139,6 +174,86 @@ describe('channels', () => {
       var spy = sinon.spy()
       go(spy)
       assert(spy.called)
+    })
+  })
+
+  describe('ops.pipe()', () => {
+
+    it ('should send all values to its destination', (cb) => {
+      var ch1 = chan()
+      var ch2 = chan()
+      ops.pipe(ch1, ch2)
+      put(ch1, 2)
+      take(ch2)
+        .then((val) => assert(val === 2))
+        .then(cb)
+    })
+
+    it ('should close downstream on close', () => {
+      var ch1 = chan()
+      var ch2 = chan()
+      ops.pipe(ch1, ch2)
+      close(ch1)
+      assert(ch2.closed)
+    })
+  })
+
+  describe('ops.mult()', () => {
+
+    it ('should send all values to each of its destinations', (cb) => {
+      var ch1 = ops.mult(chan())
+      var ch2 = chan()
+      var ch3 = chan()
+
+      ops.mult.tap(ch1, ch2)
+      ops.mult.tap(ch1, ch3)
+
+      put(ch1, 2)
+
+      take(ch2)
+        .then((val) => {
+          assert(val === 2)
+        })
+        .then(() => {
+          take(ch3).then((val) => {
+            assert(val === 2)
+            cb()
+          })
+        })
+    })
+
+    it ('should allow untapping', (cb) => {
+      var ch1 = ops.mult(chan())
+
+      var ch1 = ops.mult(chan())
+      var ch2 = chan()
+
+      ops.mult.tap(ch1, ch2)
+      
+      put(ch1, 1)
+
+      take(ch2).then((val) => assert(val === 1))
+
+      ops.mult.untap(ch1, ch2)
+
+      take(ch2).then((val) => assert(false))
+
+      put(ch1, 1)
+
+      setTimeout(cb, 100)
+    })
+
+    it ('should close downstream on close', () => {
+      var ch1 = ops.mult(chan())
+      var ch2 = chan()
+      var ch3 = chan()
+
+      ops.mult.tap(ch1, ch2)
+      ops.mult.tap(ch1, ch3)
+
+      close(ch1)
+      assert(ch2.closed)
+      assert(ch3.closed)
     })
   })
 })
