@@ -12,6 +12,13 @@ You will need to use BabelJS, of course, to add ES7 support to your project.
 ####Why another CSP library?
 There is currently only one with any traction ([js-csp](https://github.com/ubolonton/js-csp)), so another interpretation is a chance to view the subject from a different angle. Specifically, Medium tries to take CSP further into the future by embracing ES7 async/await as well as the trend towards choosing promises over callbacks. Relying on promises means that we can easily interact with other generator libraries, such as Koa.
 
+####What the heck is CSP? What are channels?
+I am hoping to write a bit more on this sometime, but for now, there are loads of great articles by smarter people than me, explaining the ins and outs, as well as the motivation of using "Communicating Sequential Processes".
+
+* [CSP and transducers in JavaScript](http://phuu.net/2014/08/31/csp-and-transducers.html)
+* [Taming the Asynchronous Beast with CSP Channels in JavaScript](http://jlongster.com/Taming-the-Asynchronous-Beast-with-CSP-in-JavaScript)
+* Check out the documentation at the above mentioned js-csp library. Different implementation, but the API and core principles are quite aligned.
+
 ####Let's, start with a trivial example
 
 ```javascript
@@ -265,5 +272,6 @@ put(ch1, 5)
 - mult(ch)
   - tap(srcCh, destCh)
   - untap(srcCh, destCh)
+
 
 
