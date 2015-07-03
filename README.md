@@ -10,7 +10,7 @@ npm install medium
 You will need to use BabelJS, of course, to add ES7 support to your project.
 
 ####Why another CSP library?
-Well, first, there is currently only one with any traction ([js-csp](https://github.com/ubolonton/js-csp)), so another interpretation can't hurt. Second, Medium tries to take CSP further into the future by embracing ES7 async/await as well as the trend towards promises as the primary asynchronous abstraction. Relying on romises means that we can easily interact with other generator libraries like Koa.
+There is currently only one with any traction ([js-csp](https://github.com/ubolonton/js-csp)), so another interpretation is likely a healthy thing. Specifically, Medium tries to take CSP further into the future by embracing ES7 async/await as well as the trend towards choosing promises over callbacks. Relying on promises means that we can easily interact with other generator libraries, such as Koa.
 
 ####Let's, start with a trivial example
 
