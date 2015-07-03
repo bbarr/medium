@@ -2,7 +2,6 @@
 import assert from 'assert'
 import sinon from 'sinon'
 
-import ts from '../lib/transducer_support'
 import buffers from '../lib/buffers'
 
 var actionStub = () => { 
@@ -35,7 +34,7 @@ describe('buffers', () => {
     describe('when there is room', () => {
 
       it ('should immediately release', () => {
-        var buffer = buffers.fixed(2, ts.transform(null))
+        var buffer = buffers.fixed(2)
         var action = actionStub()
         var spy = sinon.spy(action, 'resolve')
         buffer.push(action)
@@ -47,7 +46,7 @@ describe('buffers', () => {
 
       it ('should queue up', () => {
 
-        var buffer = buffers.fixed(2, ts.transform(null))
+        var buffer = buffers.fixed(2)
 
         // fill buffer
         buffer.push(actionStub())
@@ -62,7 +61,7 @@ describe('buffers', () => {
 
       it ('should release next action when buffer full and has > 1 waiting', () => {
 
-        var buffer = buffers.fixed(1, ts.transform(null))
+        var buffer = buffers.fixed(1)
 
         buffer.push(actionStub())
         buffer.push(actionStub())
