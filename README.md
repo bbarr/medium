@@ -23,9 +23,9 @@ I am hoping to write a bit more on this sometime, but for now, there are loads o
 
 ```javascript
 
-import channels from 'channels'
+import medium from 'medium'
 
-var { go, chan, take, put, sleep } = channels
+var { go, chan, take, put, sleep } = medium
 
 var ch = chan()
 
@@ -47,9 +47,9 @@ We can also interact with channels outside go/async blocks.
 
 ```javascript
 
-import channels from 'channels'
+import medium from 'medium'
 
-var { chan, take, put } = channels
+var { chan, take, put } = medium
 
 var ch = chan()
 
@@ -70,9 +70,9 @@ A fixed buffer immediately accepts N puts. These ```put``` actions have their pr
 When it has reached N values, it begins to buffer and will park a ```put``` action until there is space for its value.
 
 ```javascript
-import channels from 'channels'
+import medium from 'medium'
 
-var { go, chan, take, put, sleep, buffers } = channels
+var { go, chan, take, put, sleep, buffers } = medium
 
 var ch = chan(buffers.fixed(2)) // alias chan(2)
 
@@ -134,9 +134,9 @@ This is just like the fixed buffer, except
 it will push a new ```put``` value while simultaneously dropping the oldest ```put``` value.
 
 ```javascript
-import channels from 'channels'
+import medium from 'medium'
 
-var { go, chan, take, put, sleep, buffers } = channels
+var { go, chan, take, put, sleep, buffers } = medium
 
 var ch = chan(buffers.sliding(2))
 
@@ -167,10 +167,10 @@ go(async function() {
 You can use transducers!
 
 ```javascript
-import channels from '../lib/index'
+import medium from 'medium'
 import t from 'transducers-js'
 
-var { go, chan, take, put, sleep, buffers, pipe } = channels
+var { go, chan, take, put, sleep, buffers, pipe } = medium
 
 var allowEven = t.filter((n) => n % 2 === 0)
 var ch = chan(2, allowEven)
@@ -188,10 +188,10 @@ put(ch, 3)
 ###Pipe
 
 ```javascript
-import channels from '../lib/index'
+import medium from 'medium'
 import t from 'transducers-js'
 
-var { go, chan, take, put, ops } = channels
+var { go, chan, take, put, ops } = medium
 var pipe = ops.pipe
 
 var isEven = (n) => n % 2 === 0
@@ -220,9 +220,9 @@ put(ch1, 5)
 ###Mult
 
 ```javascript
-import channels from '../lib/index'
+import medium from 'medium'
 
-var { go, chan, take, put, ops } = channels
+var { go, chan, take, put, ops } = medium
 var mult = ops.mult
 
 var ch1 = mult(chan())

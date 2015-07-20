@@ -1,6 +1,6 @@
 {
   "name": "medium",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CSP-style channel library using ES7 async/await keywords",
   "main": "./lib/index.js",
   "scripts": {
@@ -11,9 +11,10 @@
     "url": "https://github.com/bbarr/medium"
   },
   "keywords": [
-    "CSP",
+    "csp",
     "channels",
-    "async"
+    "async",
+    "es7"
   ],
   "author": {
     "name": "Brendan Barr",

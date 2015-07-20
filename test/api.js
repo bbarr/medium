@@ -1,6 +1,7 @@
 
 import assert from 'assert'
 import sinon from 'sinon'
+import t from 'transducers-js'
 
 import csp from '../lib/index'
 
@@ -79,6 +80,23 @@ describe('channels', () => {
 
     it ('should return a promise', () => {
       assert(put(chan()) instanceof Promise)
+    })
+
+    it ('should allow transducer to modify content', (cb) => {
+      var ch = chan(null, t.map((n) => n + 1))
+      take(ch)
+        .then((val) => assert(val === 2))
+        .then(cb)
+      put(ch, 1)
+    })
+
+    it ('should drop the put if transducer filters it out', (cb) => {
+      var ch = chan(null, t.filter((n) => n > 1))
+      take(ch)
+        .then((val) => assert(val === 2))
+        .then(cb)
+      put(ch, 1) // dropped
+      put(ch, 2)
     })
 
     it ('should delegate to buffer', () => {
@@ -254,6 +272,26 @@ describe('channels', () => {
       close(ch1)
       assert(ch2.closed)
       assert(ch3.closed)
+    })
+  })
+
+  describe('ops.keepTaking()', () => {
+
+    it ('should send all put values to callback', (cb) => {
+      var ch = chan(5)
+      var val = 0
+
+      ops.keepTaking(ch, (data) => {
+        assert.equal(data, val)
+        if (data === 3) cb()
+      })
+
+      go(async function() {
+        await put(ch, ++val)
+        await put(ch, ++val)
+        await put(ch, ++val)
+        close(ch)
+      })
     })
   })
 })
