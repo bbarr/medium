@@ -275,24 +275,5 @@ describe('channels', () => {
     })
   })
 
-  describe('ops.keepTaking()', () => {
-
-    it ('should send all put values to callback', (cb) => {
-      var ch = chan(5)
-      var val = 0
-
-      ops.keepTaking(ch, (data) => {
-        assert.equal(data, val)
-        if (data === 3) cb()
-      })
-
-      go(async function() {
-        await put(ch, ++val)
-        await put(ch, ++val)
-        await put(ch, ++val)
-        close(ch)
-      })
-    })
-  })
 })
 
