@@ -20,7 +20,7 @@ I am hoping to write a bit more on this sometime, but for now, there are loads o
 
 * [CSP and transducers in JavaScript](http://phuu.net/2014/08/31/csp-and-transducers.html)
 * [Taming the Asynchronous Beast with CSP Channels in JavaScript](http://jlongster.com/Taming-the-Asynchronous-Beast-with-CSP-in-JavaScript)
-* Check out the documentation at the above mentioned js-csp library. Different implementation, but the API and core principles are quite aligned.
+* [Communicating Sequential Processes - Tony Hoare](http://www.usingcsp.com/cspbook.pdf)
 
 ##API 
 
