@@ -12,6 +12,9 @@ function base() {
     },
     shift: function shift() {
       return this.unreleased.shift();
+    },
+    isEmpty: function isEmpty() {
+      return !this.unreleased.length;
     }
   };
 }
@@ -40,6 +43,9 @@ function fixed(limit, xduce) {
       if (waiting) this.release(waiting);
 
       return next;
+    },
+    isEmpty: function isEmpty() {
+      return !this.released.length;
     }
   };
 }
@@ -55,6 +61,9 @@ function dropping(limit) {
     },
     shift: function shift() {
       return this.released.shift();
+    },
+    isEmpty: function isEmpty() {
+      return !this.released.length;
     }
   };
 }
@@ -72,6 +81,9 @@ function sliding(limit) {
     },
     shift: function shift() {
       return this.released.shift();
+    },
+    isEmpty: function isEmpty() {
+      return !this.released.length;
     }
   };
 }
