@@ -5,7 +5,7 @@ import t from 'transducers-js'
 
 import csp from '../lib/index'
 
-var { sleep, chan, go, put, take, ops, close, CLOSED } = csp
+var { sleep, chan, go, put, take, clone, close, CLOSED, any } = csp
 
 describe('channels', () => {
 
@@ -128,7 +128,7 @@ describe('channels', () => {
       var subject = 1
 
       go(async function() {
-        await sleep(1000)
+        await take(sleep(1000))
         subject = 2
       })
 
@@ -140,6 +140,18 @@ describe('channels', () => {
         }, 600)
       }, 600)
 
+    })
+  })
+
+  describe('clone()', () => {
+
+    it ('should create a new chan with the same properties', () => {
+      var bufferOrN = 1
+      var xduce = t.map((n) => n + 1)
+      var opts = { foo: 'bar' }
+      var a = chan(bufferOrN, xduce, opts)
+      var b = clone(a)
+      assert.equal(JSON.stringify(a), JSON.stringify(b))
     })
   })
 
@@ -187,6 +199,44 @@ describe('channels', () => {
     })
   })
 
+  describe('alts()', () => {
+
+    it ('should resolve with first channel that receives a value', (cb) => {
+      go(async () => {
+        var foo = chan()
+        var t = sleep(1000)
+        var [ val, ch ] = await any(foo, t)
+        assert(ch === t)
+      }).then(cb)
+    })
+
+    it ('should resolve immediately if one channel has a pending put', (cb) => {
+      go(async () => {
+        var foo = chan()
+        var bar = chan()
+        var t = sleep(1000)
+        put(bar, 1)
+        var [ val, ch ] = await any(foo, bar, t)
+        assert(ch === bar)
+      }).then(cb)
+    })
+
+    it ('should resolve non-deterministically when more than one has a pending put', (cb) => {
+      go(async () => {
+        var resolved = []
+        for (var i = 0; i < 100; i++) {
+          var chans = [ chan(), chan(), chan() ]
+          put(chans[1], 1)
+          put(chans[2], 2)
+          var [ val, ch ] = await any(...chans)
+          resolved.push(chans.indexOf(ch))
+        }
+        assert.ok(resolved.some((r) => r === 1))
+        assert.ok(!resolved.every((r) => r === 1))
+      }).then(cb)
+    })
+  })
+
   describe('go()', () => {
     it ('should immediately invoke given function', () => {
       var spy = sinon.spy()
@@ -194,86 +244,5 @@ describe('channels', () => {
       assert(spy.called)
     })
   })
-
-  describe('ops.pipe()', () => {
-
-    it ('should send all values to its destination', (cb) => {
-      var ch1 = chan()
-      var ch2 = chan()
-      ops.pipe(ch1, ch2)
-      put(ch1, 2)
-      take(ch2)
-        .then((val) => assert(val === 2))
-        .then(cb)
-    })
-
-    it ('should close downstream on close', () => {
-      var ch1 = chan()
-      var ch2 = chan()
-      ops.pipe(ch1, ch2)
-      close(ch1)
-      assert(ch2.closed)
-    })
-  })
-
-  describe('ops.mult()', () => {
-
-    it ('should send all values to each of its destinations', (cb) => {
-      var ch1 = ops.mult(chan())
-      var ch2 = chan()
-      var ch3 = chan()
-
-      ops.mult.tap(ch1, ch2)
-      ops.mult.tap(ch1, ch3)
-
-      put(ch1, 2)
-
-      take(ch2)
-        .then((val) => {
-          assert(val === 2)
-        })
-        .then(() => {
-          take(ch3).then((val) => {
-            assert(val === 2)
-            cb()
-          })
-        })
-    })
-
-    it ('should allow untapping', (cb) => {
-      var ch1 = ops.mult(chan())
-
-      var ch1 = ops.mult(chan())
-      var ch2 = chan()
-
-      ops.mult.tap(ch1, ch2)
-      
-      put(ch1, 1)
-
-      take(ch2).then((val) => assert(val === 1))
-
-      ops.mult.untap(ch1, ch2)
-
-      take(ch2).then((val) => assert(false))
-
-      put(ch1, 1)
-
-      setTimeout(cb, 100)
-    })
-
-    it ('should close downstream on close', () => {
-      var ch1 = ops.mult(chan())
-      var ch2 = chan()
-      var ch3 = chan()
-
-      ops.mult.tap(ch1, ch2)
-      ops.mult.tap(ch1, ch3)
-
-      close(ch1)
-      assert(ch2.closed)
-      assert(ch3.closed)
-    })
-  })
-
 })
 

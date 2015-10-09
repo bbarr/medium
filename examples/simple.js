@@ -1,22 +1,20 @@
 
-import channels from '../lib/index'
+import { chan, go, put, take, sleep, repeat, repeatTake, CLOSED } from '../lib/index'
 
-var { go, chan, take, put, sleep } = channels
+var items = chan()
+var ticks = chan()
 
-var ch = chan()
-
-go(async function() {
-  while (true) {
-    var val = await take(ch)
-    console.log('some val was given to ch', val)
-  }
+repeatTake(items, async (item) => {
+  await take(ticks)
+  console.log('got a throttled item!', item)
 })
 
-go(async function() {
-  await sleep(200)
-  await put(ch, 1)
-  await sleep(200)
-  await put(ch, 2)
-  await sleep(200)
-  await put(ch, 3)
+repeat(async () => {
+  await sleep(1000)
+  await put(items, { createdAt: Date.now() })
+})
+
+repeat(async () => {
+  await sleep(3000)
+  await put(ticks, true)
 })
