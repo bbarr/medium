@@ -15,7 +15,8 @@
     "csp",
     "channels",
     "async",
-    "es7"
+    "es7",
+    "medium"
   ],
   "author": {
     "name": "Brendan Barr",
