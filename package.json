@@ -1,6 +1,6 @@
 {
   "name": "medium",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "CSP-style channel library using ES7 async/await keywords",
   "main": "./build/index.js",
   "scripts": {
