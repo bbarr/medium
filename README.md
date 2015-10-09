@@ -1,8 +1,10 @@
 # Medium
 CSP-style channel library using ES7 async/await keywords.
 
-More documentation is coming, but the core functionality is ~160LOC, so just 
-read it.
+More documentation is coming, but the core functionality is ~160LOC, so it should 
+just take a single cup of coffee to read through. This is obviously a pretty 
+lightweight implementation, but I wanted to be sure that the API was built 
+deliberately, and not as a wholesale clone of a previous implementation.
 
 ####Installation
 
