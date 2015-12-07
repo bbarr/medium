@@ -1,16 +1,19 @@
 'use strict';
 
-var _toConsumableArray = require('babel-runtime/helpers/to-consumable-array')['default'];
-
-var _Promise = require('babel-runtime/core-js/promise')['default'];
-
-var _regeneratorRuntime = require('babel-runtime/regenerator')['default'];
-
-var _interopRequireDefault = require('babel-runtime/helpers/interop-require-default')['default'];
-
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.CLOSED = undefined;
+exports.chan = chan;
+exports.take = take;
+exports.put = put;
+exports.close = close;
+exports.go = go;
+exports.sleep = sleep;
+exports.clone = clone;
+exports.repeat = repeat;
+exports.repeatTake = repeatTake;
+exports.any = any;
 
 var _buffers = require('./buffers');
 
@@ -20,21 +23,27 @@ var _transducer_support = require('./transducer_support');
 
 var _transducer_support2 = _interopRequireDefault(_transducer_support);
 
-var CLOSED = 'medium-closed-state';
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { var callNext = step.bind(null, "next"); var callThrow = step.bind(null, "throw"); function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(callNext, callThrow); } } callNext(); }); }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+var CLOSED = exports.CLOSED = 'medium-closed-state';
 
 // CORE
 function chan(bufferOrN) {
   var xduce = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
   var opts = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
-  var buffer = typeof bufferOrN === 'number' ? _buffers2['default'].fixed(bufferOrN) : bufferOrN || _buffers2['default'].base();
+  var buffer = typeof bufferOrN === 'number' ? _buffers2.default.fixed(bufferOrN) : bufferOrN || _buffers2.default.base();
 
   return {
     args: arguments,
     opts: opts,
     closed: false,
     takes: [],
-    xduce: _transducer_support2['default'].transform(xduce),
+    xduce: _transducer_support2.default.transform(xduce),
     buffer: buffer
   };
 }
@@ -68,7 +77,7 @@ function put(ch, v) {
   }
 
   // handle transducer
-  put.payload = _transducer_support2['default'].apply(ch.xduce, put.payload);
+  put.payload = _transducer_support2.default.apply(ch.xduce, put.payload);
   if (typeof put.payload === 'undefined') {
     put.resolve(true);
     return put.promise;
@@ -106,11 +115,9 @@ function go(afn) {
 }
 
 function sleep(ms) {
-  var ch = chan();
-  setTimeout(function () {
-    return put(ch, true);
-  }, ms);
-  return ch;
+  return new Promise(function (res) {
+    setTimeout(res, ms);
+  });
 }
 
 function clone(src) {
@@ -127,7 +134,7 @@ function createAction() {
     resolve: function resolve(payload) {
       return _resolve(payload);
     },
-    promise: new _Promise(function (res) {
+    promise: new Promise(function (res) {
       return _resolve = res;
     })
   };
@@ -136,88 +143,92 @@ function createAction() {
 function repeat(afn, seed) {
   var _this = this;
 
-  go(function callee$1$0() {
+  go(_asyncToGenerator(regeneratorRuntime.mark(function _callee() {
     var result;
-    return _regeneratorRuntime.async(function callee$1$0$(context$2$0) {
-      while (1) switch (context$2$0.prev = context$2$0.next) {
-        case 0:
-          result = seed;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            result = seed;
 
-        case 1:
-          if (!true) {
-            context$2$0.next = 9;
+          case 1:
+            if (!true) {
+              _context.next = 9;
+              break;
+            }
+
+            _context.next = 4;
+            return afn(result);
+
+          case 4:
+            result = _context.sent;
+
+            if (!(result === false)) {
+              _context.next = 7;
+              break;
+            }
+
+            return _context.abrupt('break', 9);
+
+          case 7:
+            _context.next = 1;
             break;
-          }
 
-          context$2$0.next = 4;
-          return _regeneratorRuntime.awrap(afn(result));
-
-        case 4:
-          result = context$2$0.sent;
-
-          if (!(result === false)) {
-            context$2$0.next = 7;
-            break;
-          }
-
-          return context$2$0.abrupt('break', 9);
-
-        case 7:
-          context$2$0.next = 1;
-          break;
-
-        case 9:
-        case 'end':
-          return context$2$0.stop();
+          case 9:
+          case 'end':
+            return _context.stop();
+        }
       }
-    }, null, _this);
-  });
+    }, _callee, _this);
+  })));
 }
 
 function repeatTake(ch, afn, seed) {
   var _this2 = this;
 
-  go(function callee$1$0() {
+  go(_asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
     var result, item;
-    return _regeneratorRuntime.async(function callee$1$0$(context$2$0) {
-      while (1) switch (context$2$0.prev = context$2$0.next) {
-        case 0:
-          result = seed;
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            result = seed;
 
-        case 1:
-          if (!true) {
-            context$2$0.next = 12;
+          case 1:
+            if (!true) {
+              _context2.next = 12;
+              break;
+            }
+
+            _context2.next = 4;
+            return take(ch);
+
+          case 4:
+            item = _context2.sent;
+            _context2.next = 7;
+            return afn(item, result);
+
+          case 7:
+            result = _context2.sent;
+
+            if (!(result === false)) {
+              _context2.next = 10;
+              break;
+            }
+
+            return _context2.abrupt('break', 12);
+
+          case 10:
+            _context2.next = 1;
             break;
-          }
 
-          context$2$0.next = 4;
-          return _regeneratorRuntime.awrap(take(ch));
-
-        case 4:
-          item = context$2$0.sent;
-          context$2$0.next = 7;
-          return _regeneratorRuntime.awrap(afn(item, result));
-
-        case 7:
-          result = context$2$0.sent;
-
-          if (!(result === false)) {
-            context$2$0.next = 10;
-            break;
-          }
-
-          return context$2$0.abrupt('break', 12);
-
-        case 10:
-          context$2$0.next = 1;
-          break;
-
-        case 12:
-        case 'end':
-          return context$2$0.stop();
+          case 12:
+          case 'end':
+            return _context2.stop();
+        }
       }
-    }, null, _this2);
-  });
+    }, _callee2, _this2);
+  })));
 }
 
 function any() {
@@ -244,45 +255,30 @@ function any() {
     return format(ready[Math.floor(Math.random() * ready.length)]);
   }
 
-  return new _Promise(function (res) {
+  return new Promise(function (res) {
     chs.forEach(function (ch) {
-      go(function callee$3$0() {
+      go(_asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
         var val;
-        return _regeneratorRuntime.async(function callee$3$0$(context$4$0) {
-          while (1) switch (context$4$0.prev = context$4$0.next) {
-            case 0:
-              context$4$0.next = 2;
-              return _regeneratorRuntime.awrap(take(ch));
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                _context3.next = 2;
+                return take(ch);
 
-            case 2:
-              val = context$4$0.sent;
+              case 2:
+                val = _context3.sent;
 
-              res([val, ch]);
-              close(ch);
+                res([val, ch]);
+                close(ch);
 
-            case 5:
-            case 'end':
-              return context$4$0.stop();
+              case 5:
+              case 'end':
+                return _context3.stop();
+            }
           }
-        }, null, _this3);
-      });
+        }, _callee3, _this3);
+      })));
     });
   });
 }
-
-// API
-exports['default'] = {
-  CLOSED: CLOSED,
-  go: go,
-  sleep: sleep,
-  close: close,
-  put: put,
-  take: take,
-  clone: clone,
-  buffers: _buffers2['default'],
-  chan: chan,
-  repeat: repeat,
-  repeatTake: repeatTake,
-  any: any
-};
-module.exports = exports['default'];

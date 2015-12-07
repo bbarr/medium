@@ -3,9 +3,7 @@ import assert from 'assert'
 import sinon from 'sinon'
 import t from 'transducers-js'
 
-import csp from '../lib/index'
-
-var { sleep, chan, go, put, take, clone, close, CLOSED, any } = csp
+import { sleep, chan, go, put, take, clone, close, CLOSED, any } from '../lib/index'
 
 describe('channels', () => {
 
@@ -128,7 +126,7 @@ describe('channels', () => {
       var subject = 1
 
       go(async function() {
-        await take(sleep(1000))
+        await sleep(1000)
         subject = 2
       })
 
@@ -182,11 +180,12 @@ describe('channels', () => {
 
     it ('should cause all pending takes to resolve with CLOSED constant immediately', (cb) => {
       var ch = chan()
-      var taken = take(ch)
+      var takenA = take(ch)
+      var takenB = take(ch)
       close(ch)
-      taken
-        .then((val) => assert(val === CLOSED))
-        .then(cb)
+      takenA.then((val) => assert(val === CLOSED))
+      takenB.then((val) => assert(val === CLOSED))
+      Promise.all([ takenA, takenB ]).then(() => cb())
     })
 
     it ('should cause all pending puts in buffer to resolve with false immediately', (cb) => {
@@ -201,20 +200,26 @@ describe('channels', () => {
 
   describe('alts()', () => {
 
+    let sleepyChan = (ms, val) => {
+      let ch = chan()
+      setTimeout(() => put(ch, val), ms)
+      return ch
+    }
+
     it ('should resolve with first channel that receives a value', (cb) => {
       go(async () => {
         var foo = chan()
-        var t = sleep(1000)
+        var t = sleepyChan(1000, 1)
         var [ val, ch ] = await any(foo, t)
         assert(ch === t)
-      }).then(cb)
+      }).then(cb).catch(console.log.bind(console))
     })
 
     it ('should resolve immediately if one channel has a pending put', (cb) => {
       go(async () => {
         var foo = chan()
         var bar = chan()
-        var t = sleep(1000)
+        var t = sleepyChan(1000, 1)
         put(bar, 1)
         var [ val, ch ] = await any(foo, bar, t)
         assert(ch === bar)

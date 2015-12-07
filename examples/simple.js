@@ -1,20 +1,24 @@
 
-import { chan, go, put, take, sleep, repeat, repeatTake, CLOSED } from '../lib/index'
+import { chan, go, put, close, take, sleep, repeat, repeatTake, CLOSED } from '../lib/index'
 
-var items = chan()
-var ticks = chan()
+let player = async (name, table) => {
+  repeatTake(table, async (ball) => {
+    if (ball === CLOSED) {
+      console.log(`${name} is closed!`)
+      return false
+    }
+    ball.hits++
+    console.log(name, ball.hits)
+    await sleep(100)
+    put(table, ball)
+  })
+}
 
-repeatTake(items, async (item) => {
-  await take(ticks)
-  console.log('got a throttled item!', item)
-})
-
-repeat(async () => {
+go(async () => {
+  let table = chan()
+  player('ping', table)
+  player('pong', table)
+  put(table, { hits: 0 })
   await sleep(1000)
-  await put(items, { createdAt: Date.now() })
-})
-
-repeat(async () => {
-  await sleep(3000)
-  await put(ticks, true)
+  close(table)
 })

@@ -88,5 +88,4 @@ function sliding(limit) {
   };
 }
 
-exports["default"] = { base: base, fixed: fixed, dropping: dropping, sliding: sliding };
-module.exports = exports["default"];
+exports.default = { base: base, fixed: fixed, dropping: dropping, sliding: sliding };
