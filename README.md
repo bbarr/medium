@@ -98,15 +98,28 @@ take(ch).then(::console.log)
 
 ```
 
+####Transducers
+Of course, you may need to filter or modify values as they are put onto the channel. Transducers are the best option here, and are fully supported.
+
+```javascript
+import t from 'transducers-js'
+
+let shouts = chan(null, t.map(str => `${str}!!!`))
+put(shouts, 'HAI')
+take(shouts).then(::console.log)
+// LOGS: 'HAI!!!'
+```
+
 ####Building something larger
 
 Things get much more interesting though when we use async/await to better coordinate our channels.
 
 ```javascript
+import t from 'transducers-js'
 import { chan, put, take, sleep, go } from '../lib/index'
 
 let numbers = chan()
-let oddNumbers = chan()
+let oddNumbers = chan(null, t.filter(n => n % 2)
 
 go(async () => {
   while (true) {
@@ -117,7 +130,7 @@ go(async () => {
 go(async () => {
   while (true) {
     let n = await take(numbers)
-    if (n % 2) await put(oddNumbers, n)
+    await put(oddNumbers, n)
   }
 })
 
@@ -136,7 +149,7 @@ So we have a number being generated every second, and put onto the ```numbers```
 What if we want to keep track of the percent odd vs. even? We can put a bit of local state in the process that checks for oddness. However, mutating state sucks, so, we use the function ```repeat``` to both act as a ```while``` loop and manage state immutably!
 
 ```javascript
-import { chan, put, take, sleep, go } from '../lib/index'
+import { chan, put, take, sleep, go, repeat } from '../lib/index'
 
 let numbers = chan()
 let oddNumbers = chan()
@@ -156,12 +169,11 @@ go(async () => {
 
 go(async () => {
   repeat(async ({ total, odds }) => {
-    let n = await take(numbers)
-    
     put(stats, `${odds / total * 100}% odd numbers`)
     
+    let n = await take(numbers)
     if (n % 2) {
-      await put(oddNumbers, n)
+      put(oddNumbers, n)
       return { total: total + 1, odds: odds + 1 }
     } else {
       return { total: total + 1, odds }
@@ -185,12 +197,11 @@ We can even take our ```repeat``` function one step further, and use ```repeatTa
 
 ```javascript
 go(async () => {
-  repeatTake(numbers, async (n, { total, odds }) => {
-    
+  repeatTake(async (n, { total, odds }) => {
     put(stats, `${odds / total * 100}% odd numbers`)
     
     if (n % 2) {
-      await put(oddNumbers, n)
+      put(oddNumbers, n)
       return { total: total + 1, odds: odds + 1 }
     } else {
       return { total: total + 1, odds }
@@ -245,28 +256,35 @@ deliberately, and not just a port from some previous effort.
 
 ##API 
 
-###chan(numOrBuffer=null, xducer=null)
+###chan(numOrBuffer=null, xducer=null) -> Chan
+Creates a channel. All arguments are optional.
+**numOfBuffer** - Any number or buffer. A number is a shortcut for ```buffers.fixed(number)```.
+**xducer** - a transducer to process/filter values with.
 
-###put(ch, val)
+###put(ch, val) -> Promise<true|false>
+Puts a value onto a channel. Returned promise resolves to true if successful, or false if the channel is closed.
 
-###take(ch)
+###take(ch) -> Promise<takenValue|CLOSED>
+Takes a value from a channel. Returned Promise resolves to taken value or CLOSED constant if the channel is closed.
 
-###go(async function)
+###go(async function) -> Promise<promiseFromWrappedAsyncFunction>
+Immediately invokes (and returns) given function.
 
-###sleep(ms)
+###sleep(ms) -> Promise<>
+Creates a promise that will resolve successfully after ```ms``` milliseconds.
 
 ###CLOSED
 A constant, which all takes on a closed channel receive instead of a value.
 
-###close(ch)
+###close(ch) -> undefined
 Closes a channel. This causes:
 - all puts and pending puts to resolve to false
 - all takes and pending takes to resolve to the CLOSED constant
 
-###clone(ch)
+###clone(ch) -> Chan
 Makes a new channel, same as the old channel.
 
-###any(ch1, ch2, ch3, ...)
+###any(ch1, ch2, ch3, ...) -> Promise<[theResolvedValue,theSourceChannel]>
 Like ```alts``` in Clojure's ```core-async```.
 
 If none of them have a pending value, it will resolve with whichever channel receives a value next.
@@ -275,7 +293,7 @@ If more than one channel has a pending value, it selects one in a non-determinis
 
 Always resolves with a double of ```[ theResolvedValue, theSourceChannel ]```.
 
-###repeat(async function, seed=null)
+###repeat(async function, seed=null) -> undefined
 I don't love ```while``` loops, so I use this instead. 
 
 As a bonus, you can track state without mutations! Return a value other than false, and it will be available as the argument to your callback async function. Pass in a ```seed``` value as the second argument to repeat.
@@ -287,8 +305,12 @@ See the ping/pong example above to see this in action.
 
 ##buffers
 ###buffers.unbuffered()
+No buffer space. The default choice for when first argument to ```chan``` is falsy.
 ###buffers.fixed(num)
+Buffer has space of ```num```. Any extra ```put```s are parked.
 ###buffers.sliding(num)
+Buffer simply slides across pending puts as a window of ```num``` width. So, oldest puts are dropped as new ones are added.
 ###buffers.dropping(num)
+Buffer drops, and resolves, any extra puts beyond ```num```.
 
 
