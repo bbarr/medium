@@ -33,6 +33,7 @@ put(ch1, 3).then(::console.log)
 
 The strategy with which a channel handles an excess of ```put```s is implemented as a ```buffer```. The default channel does not allow for any buffered values, so if you ```put``` without a waiting ```take``` for the value, it will not resolve the ```put``` until a corresponding ```take``` is added. For example:
 
+####No buffer
 ```javascript
 let ch1 = chan()
 put(ch1, 1).then(() => console.log('put 1'))
@@ -45,6 +46,7 @@ take(ch1)
 
 An example of a different buffer would be a "fixed" buffer, which has N slots for ```put``` values to wait for a ```take```. For example:
 
+####Fixed buffer
 ```javascript
 let ch = chan()
 let fixedCh = chan(buffers.fixed(2)) // or shortcut with chan(2)
@@ -67,7 +69,7 @@ take(fixedCh).then(::console.log)
 
 The other included buffers are, "dropping", which allows N puts, then begins "dropping" them, causing the put to resolve successfully but the value is not added to the channel, and "sliding", which allows N puts, then begins shifting the buffer, dropping the oldest buffered ```put``` value and adding the newest to the other end.
 
-####Dropping Buffer
+####Dropping buffer
 ```javascript
 let ch = chan(buffers.dropping(2))
 put(ch, 1)
@@ -83,7 +85,7 @@ put(ch, 3)
 // LOGS: 3
 ```
 
-####Sliding Buffer
+####Sliding buffer
 ```javascript
 let ch = chan(buffers.sliding(2))
 put(ch, 1)
@@ -95,8 +97,6 @@ take(ch).then(::console.log)
 // LOGS: 3
 
 ```
-
-####Simple examples
 
 ####Building something larger
 
