@@ -7,9 +7,7 @@ CSP-style channel library using ES7 async/await keywords.
 npm install medium
 ```
 
-##Examples
-
-####The Basics
+####Channel interactions in a nutshell
 
 Channels are queues, you can ```put``` things onto them and ```take``` things off, in a first-in-first-out way. Channels can be closed, after which, they will not receive or deliver values. ```put``` and ```take``` are both asynchronous actions, and return promises. ```put``` promises simply resolve to ```true``` if it was able to successfully add its value to the channel, or ```false``` if the channel is closed. ```take``` promises resolve either to whatever was next in the channel queue, or to the constant ```CLOSED``` if the channel is closed. For example:
 
@@ -197,7 +195,7 @@ We can even take our ```repeat``` function one step further, and use ```repeatTa
 
 ```javascript
 go(async () => {
-  repeatTake(async (n, { total, odds }) => {
+  repeatTake(numbers, async (n, { total, odds }) => {
     put(stats, `${odds / total * 100}% odd numbers`)
     
     if (n % 2) {
@@ -261,16 +259,16 @@ Creates a channel. All arguments are optional.
 **numOfBuffer** - Any number or buffer. A number is a shortcut for ```buffers.fixed(number)```.
 **xducer** - a transducer to process/filter values with.
 
-###put(ch, val) -> Promise<true|false>
+###put(ch, val) -> Promise -> true|false
 Puts a value onto a channel. Returned promise resolves to true if successful, or false if the channel is closed.
 
-###take(ch) -> Promise<takenValue|CLOSED>
+###take(ch) -> Promise -> takenValue|CLOSED
 Takes a value from a channel. Returned Promise resolves to taken value or CLOSED constant if the channel is closed.
 
-###go(async function) -> Promise<promiseFromWrappedAsyncFunction>
+###go(async function) -> promiseFromInvokedAsyncFunction
 Immediately invokes (and returns) given function.
 
-###sleep(ms) -> Promise<>
+###sleep(ms) -> Promise
 Creates a promise that will resolve successfully after ```ms``` milliseconds.
 
 ###CLOSED
@@ -284,7 +282,7 @@ Closes a channel. This causes:
 ###clone(ch) -> Chan
 Makes a new channel, same as the old channel.
 
-###any(ch1, ch2, ch3, ...) -> Promise<[theResolvedValue,theSourceChannel]>
+###any(ch1, ch2, ch3, ...) -> Promise -> [theResolvedValue,theSourceChannel]
 Like ```alts``` in Clojure's ```core-async```.
 
 If none of them have a pending value, it will resolve with whichever channel receives a value next.
@@ -298,7 +296,7 @@ I don't love ```while``` loops, so I use this instead.
 
 As a bonus, you can track state without mutations! Return a value other than false, and it will be available as the argument to your callback async function. Pass in a ```seed``` value as the second argument to repeat.
 
-###repeatTake(ch, async function, seed=null)
+###repeatTake(ch, async function, seed=null) -> undefined
 This is jsut like ```repeat``` above, except that before it repeats, it waits for a successful ```take``` on the given channel. Then it passes this taken value in as the first argument, with any local state being passed as the second argument.
 
 See the ping/pong example above to see this in action.
