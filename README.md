@@ -13,7 +13,7 @@ npm install medium
 
 Channels are queues, you can ```put``` things onto them and ```take``` things off, in a first-in-first-out way. Channels can be closed, after which, they will not receive or deliver values. ```put``` and ```take``` are both asynchronous actions, and return promises. ```put``` promises simply resolve to ```true``` if it was able to successfully add its value to the channel, or ```false``` if the channel is closed. ```take``` promises resolve either to whatever was next in the channel queue, or to the constant ```CLOSED``` if the channel is closed. For example:
 
-```
+```javascript
 let ch1 = chan()
 put(ch1, 1)
 take(ch1).then(::console.log)
@@ -31,26 +31,9 @@ put(ch1, 3).then(::console.log)
 // LOGS: false
 ```
 
-An example of a different buffer would be a "fixed" buffer, which has N slots for ```put``` values to wait for a ```take```. For example:
-
-```
-let ch = chan()
-let fixedCh = chan(buffers.fixed(2)) // or shortcut with chan(2)
-
-put(ch, 1).then(::console.log)
-// LOGS NOTHING
-
-put(fixedCh, 1).then(::console.log)
-// LOGS: true
-put(fixedCh, 2).then(::console.log)
-// LOGS: true
-put(fixedCh, 3).then(() => console.log('put 3'))
-// LOGS NOTHING
-```
-
 The strategy with which a channel handles an excess of ```put```s is implemented as a ```buffer```. The default channel does not allow for any buffered values, so if you ```put``` without a waiting ```take``` for the value, it will not resolve the ```put``` until a corresponding ```take``` is added. For example:
 
-```
+```javascript
 let ch1 = chan()
 put(ch1, 1).then(() => console.log('put 1'))
 put(ch1, 2).then(() => console.log('put 2'))
@@ -60,13 +43,66 @@ take(ch1)
 // LOGS: 'put 2'
 ```
 
+An example of a different buffer would be a "fixed" buffer, which has N slots for ```put``` values to wait for a ```take```. For example:
+
+```javascript
+let ch = chan()
+let fixedCh = chan(buffers.fixed(2)) // or shortcut with chan(2)
+
+put(ch, 1).then(::console.log)
+// LOGS NOTHING
+
+put(fixedCh, 1).then(() => console.log('put 1'))
+// LOGS: put 1
+put(fixedCh, 2).then(() => console.log('put 2'))
+// LOGS: put 2
+put(fixedCh, 3).then(() => console.log('put 3'))
+// LOGS NOTHING
+
+take(fixedCh).then(::console.log)
+// LOGS: 1
+// LOGS: put 3
+
+```
+
+The other included buffers are, "dropping", which allows N puts, then begins "dropping" them, causing the put to resolve successfully but the value is not added to the channel, and "sliding", which allows N puts, then begins shifting the buffer, dropping the oldest buffered ```put``` value and adding the newest to the other end.
+
+####Dropping Buffer
+```javascript
+let ch = chan(buffers.dropping(2))
+put(ch, 1)
+put(ch, 2)
+put(ch, 3) // this is dropped
+take(ch).then(::console.log)
+// LOGS: 1
+take(ch).then(::console.log)
+// LOGS: 2
+take(ch).then(::console.log)
+// LOGS NOTHING
+put(ch, 3)
+// LOGS: 3
+```
+
+####Sliding Buffer
+```javascript
+let ch = chan(buffers.sliding(2))
+put(ch, 1)
+put(ch, 2)
+put(ch, 3) // this causes the put of 1 to be dropped
+take(ch).then(::console.log)
+// LOGS: 2
+take(ch).then(::console.log)
+// LOGS: 3
+
+```
+
 ####Simple examples
 
 ####Building something larger
 
 Things get much more interesting though when we use async/await to better coordinate our channels.
 
-```
+```javascript
 import { chan, put, take, sleep, go } from '../lib/index'
 
 let numbers = chan()
@@ -99,7 +135,7 @@ So we have a number being generated every second, and put onto the ```numbers```
 
 What if we want to keep track of the percent odd vs. even? We can put a bit of local state in the process that checks for oddness. However, mutating state sucks, so, we use the function ```repeat``` to both act as a ```while``` loop and manage state immutably!
 
-```
+```javascript
 import { chan, put, take, sleep, go } from '../lib/index'
 
 let numbers = chan()
@@ -147,7 +183,7 @@ And now we see that, indeed, our universe isn't broken and over time our cumalit
 
 We can even take our ```repeat``` function one step further, and use ```repeatTake```, since that is exactly what we are doing.
 
-```
+```javascript
 go(async () => {
   repeatTake(numbers, async (n, { total, odds }) => {
     
@@ -167,7 +203,7 @@ go(async () => {
 So we just change the signature a bit, and our local "repeat" state is passed as the second argument instead of the first. 
 
 ####Requisite ping/pong example
-```
+```javascript
 
 import { chan, go, put, close, take, sleep, repeatTake, CLOSED } from '../lib/index'
 
