@@ -9,7 +9,164 @@ npm install medium
 
 ##Examples
 
-####Basic ping/pong
+####The Basics
+
+Channels are queues, you can ```put``` things onto them and ```take``` things off, in a first-in-first-out way. Channels can be closed, after which, they will not receive or deliver values. ```put``` and ```take``` are both asynchronous actions, and return promises. ```put``` promises simply resolve to ```true``` if it was able to successfully add its value to the channel, or ```false``` if the channel is closed. ```take``` promises resolve either to whatever was next in the channel queue, or to the constant ```CLOSED``` if the channel is closed. For example:
+
+```
+let ch1 = chan()
+put(ch1, 1)
+take(ch1).then(::console.log)
+// LOGS: 1
+
+take(ch1).then(::console.log)
+put(ch1, 2)
+// LOGS: 2
+
+take(ch1).then(::console.log)
+close(ch1)
+// LOGS: CLOSED
+
+put(ch1, 3).then(::console.log)
+// LOGS: false
+```
+
+An example of a different buffer would be a "fixed" buffer, which has N slots for ```put``` values to wait for a ```take```. For example:
+
+```
+let ch = chan()
+let fixedCh = chan(buffers.fixed(2)) // or shortcut with chan(2)
+
+put(ch, 1).then(::console.log)
+// LOGS NOTHING
+
+put(fixedCh, 1).then(::console.log)
+// LOGS: true
+put(fixedCh, 2).then(::console.log)
+// LOGS: true
+put(fixedCh, 3).then(() => console.log('put 3'))
+// LOGS NOTHING
+```
+
+The strategy with which a channel handles an excess of ```put```s is implemented as a ```buffer```. The default channel does not allow for any buffered values, so if you ```put``` without a waiting ```take``` for the value, it will not resolve the ```put``` until a corresponding ```take``` is added. For example:
+
+```
+let ch1 = chan()
+put(ch1, 1).then(() => console.log('put 1'))
+put(ch1, 2).then(() => console.log('put 2'))
+take(ch1)
+// LOGS: 'put 1'
+take(ch1)
+// LOGS: 'put 2'
+```
+
+####Simple examples
+
+####Building something larger
+
+Things get much more interesting though when we use async/await to better coordinate our channels.
+
+```
+import { chan, put, take, sleep, go } from '../lib/index'
+
+let numbers = chan()
+let oddNumbers = chan()
+
+go(async () => {
+  while (true) {
+    console.log('an odd number: ', await take(oddNumbers))
+  }
+})
+
+go(async () => {
+  while (true) {
+    let n = await take(numbers)
+    if (n % 2) await put(oddNumbers, n)
+  }
+})
+
+go(async () => {
+  while (true) {
+    let randomNum = Math.floor(Math.random() * 100)
+    await put(numbers, randomNum)
+    await sleep(1000)
+  }
+})
+
+```
+
+So we have a number being generated every second, and put onto the ```numbers``` channel. This is consumed and tested for "oddness", and if it passes, then it is put onto the ```oddNumbers``` channel where it is simply console.log'ed.
+
+What if we want to keep track of the percent odd vs. even? We can put a bit of local state in the process that checks for oddness. However, mutating state sucks, so, we use the function ```repeat``` to both act as a ```while``` loop and manage state immutably!
+
+```
+import { chan, put, take, sleep, go } from '../lib/index'
+
+let numbers = chan()
+let oddNumbers = chan()
+let stats = chan()
+
+go(async () => {
+  while (true) {
+    console.log('an odd number: ', await take(oddNumbers))
+  }
+})
+
+go(async () => {
+  while (true) {
+    console.log('Stats: ', await take(stats))
+  }
+})
+
+go(async () => {
+  repeat(async ({ total, odds }) => {
+    let n = await take(numbers)
+    
+    put(stats, `${odds / total * 100}% odd numbers`)
+    
+    if (n % 2) {
+      await put(oddNumbers, n)
+      return { total: total + 1, odds: odds + 1 }
+    } else {
+      return { total: total + 1, odds }
+    }
+    
+  }, { total: 0, odds: 0 })
+})
+
+go(async () => {
+  while (true) {
+    let randomNum = Math.floor(Math.random() * 100)
+    await put(numbers, randomNum)
+    await sleep(1000)
+  }
+})
+```
+
+And now we see that, indeed, our universe isn't broken and over time our cumalitive chance of an odd number closes in on 50%.
+
+We can even take our ```repeat``` function one step further, and use ```repeatTake```, since that is exactly what we are doing.
+
+```
+go(async () => {
+  repeatTake(numbers, async (n, { total, odds }) => {
+    
+    put(stats, `${odds / total * 100}% odd numbers`)
+    
+    if (n % 2) {
+      await put(oddNumbers, n)
+      return { total: total + 1, odds: odds + 1 }
+    } else {
+      return { total: total + 1, odds }
+    }
+    
+  }, { total: 0, odds: 0 })
+})
+```
+
+So we just change the signature a bit, and our local "repeat" state is passed as the second argument instead of the first. 
+
+####Requisite ping/pong example
 ```
 
 import { chan, go, put, close, take, sleep, repeatTake, CLOSED } from '../lib/index'
@@ -44,6 +201,7 @@ go(async () => {
 })
 
 ```
+
 
 More documentation is coming, but the core functionality is ~160LOC, so it should 
 just take a single cup of coffee to read through. I wanted to be sure that the API was built 
