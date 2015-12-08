@@ -1,4 +1,6 @@
 
+import 'babel-polyfill'
+
 import assert from 'assert'
 import sinon from 'sinon'
 import t from 'transducers-js'
