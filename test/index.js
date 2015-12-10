@@ -5,7 +5,7 @@ import assert from 'assert'
 import sinon from 'sinon'
 import t from 'transducers-js'
 
-import { sleep, chan, go, put, take, clone, close, CLOSED, any } from '../lib/index'
+import { cancel, merge, sleep, chan, go, put, take, clone, close, CLOSED, any } from '../lib/index'
 
 describe('channels', () => {
 
@@ -13,6 +13,15 @@ describe('channels', () => {
 
     it ('should return a promise', () => {
       assert(put(chan()) instanceof Promise)
+    })
+
+    it ('should by implied by simply awaiting a channel', (cb) => {
+      go(async () => {
+        let ch = chan()
+        put(ch, 1)
+        let val = await ch
+        assert.equal(val, 1)
+      }).then(cb)
     })
 
     it ('should deliver oldest put value', (cb) => {
@@ -242,6 +251,51 @@ describe('channels', () => {
         assert.ok(!resolved.every((r) => r === 1))
       }).then(cb)
     })
+
+    it ('should cancel all other channel actions after a resolved', (cb) => {
+      go(async () => {
+        var foo = chan()
+        var bar = chan()
+        var t = sleepyChan(1000, 1)
+        put(bar, 1)
+        await any(foo, bar, t)
+        put(foo, 2)
+        let val = await take(foo)
+        assert.equal(val, 2)
+      }).then(cb)
+    })
+  })
+
+  describe('cancel()', () => {
+
+    describe('canceling a put', () => {
+
+      it ('should remove it from the buffer\'s unreleased queue', (cb) => {
+        let ch = chan()
+        go(async () => {
+          let put1Promise = put(ch, 1)
+          let put2Promise = put(ch, 2)
+          cancel(ch, put1Promise)
+          let val = await take(ch)
+          assert.equal(val, 2)
+        }).then(cb)
+      })
+    })
+
+    describe('canceling a take', () => {
+
+      it ('should remove it from the channel\'s takes', (cb) => {
+        let ch = chan()
+        go(async () => {
+          let take1Promise = take(ch)
+          let take2Promise = take(ch)
+          cancel(ch, take1Promise)
+          put(ch, 2)
+          let val = await take2Promise
+          assert.equal(val, 2)
+        }).then(cb)
+      })
+    })
   })
 
   describe('go()', () => {
@@ -249,6 +303,50 @@ describe('channels', () => {
       var spy = sinon.spy()
       go(spy)
       assert(spy.called)
+    })
+  })
+
+  describe('merge()', () => {
+
+    it ('should take from all inputs and put onto single output channel', (cb) => {
+
+      var a = chan()
+      var b = chan()
+      var c = chan()
+      var merged = merge(a, b, c)
+      
+      go(async () => {
+
+        await put(a, 1)
+        await put(b, 2)
+        await put(c, 3)
+
+        let fromA = await take(merged)
+        let fromB = await take(merged)
+        let fromC = await take(merged)
+
+        assert.equal(fromA, 1)
+        assert.equal(fromB, 2)
+        assert.equal(fromC, 3)
+
+      }).then(cb)
+    })
+
+    it ('should close output channel when all inputs are closed', (cb) => {
+
+      var a = chan()
+      var b = chan()
+      var c = chan()
+      var merged = merge(a, b, c)
+      
+      go(async () => {
+        assert.equal(merged.closed, false)
+        close(a)
+        close(b)
+        close(c)
+      })
+      .then(() => assert.equal(merged.closed, true))
+      .then(cb)
     })
   })
 })

@@ -127,7 +127,7 @@ go(async () => {
 
 go(async () => {
   while (true) {
-    let n = await take(numbers)
+    let n = await numbers // awaiting a channel is an implied "take"
     await put(oddNumbers, n)
   }
 })
@@ -155,13 +155,13 @@ let stats = chan()
 
 go(async () => {
   while (true) {
-    console.log('an odd number: ', await take(oddNumbers))
+    console.log('an odd number: ', await oddNumbers)
   }
 })
 
 go(async () => {
   while (true) {
-    console.log('Stats: ', await take(stats))
+    console.log('Stats: ', await stats)
   }
 })
 
@@ -169,7 +169,7 @@ go(async () => {
   repeat(async ({ total, odds }) => {
     put(stats, `${odds / total * 100}% odd numbers`)
     
-    let n = await take(numbers)
+    let n = await numbers
     if (n % 2) {
       put(oddNumbers, n)
       return { total: total + 1, odds: odds + 1 }
@@ -282,7 +282,7 @@ Closes a channel. This causes:
 ###clone(ch) -> Chan
 Makes a new channel, same as the old channel.
 
-###any(ch1, ch2, ch3, ...) -> Promise -> [theResolvedValue,theSourceChannel]
+###any(...chs) -> Promise -> [theResolvedValue,theSourceChannel]
 Like ```alts``` in Clojure's ```core-async```.
 
 If none of them have a pending value, it will resolve with whichever channel receives a value next.
@@ -290,6 +290,8 @@ If one of the channels has a pending value already, it will simply resolve to th
 If more than one channel has a pending value, it selects one in a non-deterministic fashion.
 
 Always resolves with a double of ```[ theResolvedValue, theSourceChannel ]```.
+
+All non-winning actions will be canceled so that their data does not go missing.
 
 ###repeat(async function, seed=null) -> undefined
 I don't love ```while``` loops, so I use this instead. 
@@ -300,6 +302,9 @@ As a bonus, you can track state without mutations! Return a value other than fal
 This is jsut like ```repeat``` above, except that before it repeats, it waits for a successful ```take``` on the given channel. Then it passes this taken value in as the first argument, with any local state being passed as the second argument.
 
 See the ping/pong example above to see this in action.
+
+###merge(...chs)
+Creates a new channel that will receive all puts to the received channels.
 
 ##buffers
 ###buffers.unbuffered()
