@@ -264,6 +264,61 @@ describe('channels', () => {
         assert.equal(val, 2)
       }).then(cb)
     })
+
+    it ('should work with takes and puts - put winning', (cb) => {
+      go(async () => {
+
+        var forTakes = chan()
+        var forPuts = chan()
+        
+        let gettingFirst = any(forTakes, [ forPuts, 1 ])
+        
+        await take(forPuts)
+
+        let [ v, c ] = await gettingFirst
+        
+        assert.equal(v, 1)
+        assert.equal(c, forPuts)
+
+      }).then(cb)
+    })
+
+    it ('should work with takes and puts - take winning', (cb) => {
+
+      go(async () => {
+
+        let forTakes = chan()
+        let forPuts = chan()
+        
+        let gettingFirst = any(forTakes, [ forPuts, 1 ])
+        
+        await put(forTakes, 2)
+
+        let [ v, c ] = await gettingFirst
+        
+        assert.equal(v, 2)
+        assert.equal(c, forTakes)
+
+      }).then(cb)
+    })
+
+    it ('should work with raw promises - promise winning', (cb) => {
+
+      go(async () => {
+
+        let forTakes = chan()
+        let forPuts = chan()
+        let forPromise = Promise.resolve(3)
+        
+        let gettingFirst = any(forTakes, [ forPuts, 1 ], forPromise)
+        
+        let [ v, c ] = await gettingFirst
+        
+        assert.equal(v, 3)
+        assert.equal(c, forPromise)
+
+      }).then(cb)
+    })
   })
 
   describe('cancel()', () => {

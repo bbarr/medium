@@ -282,8 +282,11 @@ Closes a channel. This causes:
 ###clone(ch) -> Chan
 Makes a new channel, same as the old channel.
 
-###any(...chs) -> Promise -> [theResolvedValue,theSourceChannel]
+###any(...ports) -> Promise -> [theResolvedValue, theSourceChannelOrPromise]
 Like ```alts``` in Clojure's ```core-async```.
+
+```ports``` can be a channel to take from, a promise to resolve, or an array 
+to put data onto a channel, like ```[ theChannel, valueToPut ]```.
 
 If none of them have a pending value, it will resolve with whichever channel receives a value next.
 If one of the channels has a pending value already, it will simply resolve to that.
