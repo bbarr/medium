@@ -137,7 +137,7 @@ describe('channels', () => {
       var subject = 1
 
       go(async function() {
-        await sleep(1000)
+        await sleep(100)
         subject = 2
       })
 
@@ -146,8 +146,8 @@ describe('channels', () => {
         setTimeout(() => {
           assert(subject === 2)
           cb()
-        }, 600)
-      }, 600)
+        }, 60)
+      }, 60)
 
     })
   })
@@ -211,29 +211,24 @@ describe('channels', () => {
 
   describe('alts()', () => {
 
-    let sleepyChan = (ms, val) => {
-      let ch = chan()
-      setTimeout(() => put(ch, val), ms)
-      return ch
-    }
-
-    it ('should resolve with first channel that receives a value', (cb) => {
+    it ('should resolve with first action that resolves', (cb) => {
       go(async () => {
-        var foo = chan()
-        var t = sleepyChan(1000, 1)
-        var [ val, ch ] = await any(foo, t)
-        assert(ch === t)
-      }).then(cb).catch(console.log.bind(console))
+        var ch1 = chan()
+        var p = sleep(100)
+        var [ v, ch ] = await any(ch1, p)
+        assert.equal(ch, p)
+      }).then(cb, cb)
     })
 
-    it ('should resolve immediately if one channel has a pending put', (cb) => {
+    it ('should resolve immediately if a take has a pending put', (cb) => {
       go(async () => {
-        var foo = chan()
-        var bar = chan()
-        var t = sleepyChan(1000, 1)
-        put(bar, 1)
-        var [ val, ch ] = await any(foo, bar, t)
-        assert(ch === bar)
+        var ch1 = chan()
+        var ch2 = chan()
+        var p = sleep(1000)
+        put(ch2, 1)
+        var [ v, ch ] = await any(ch1, ch2, p)
+        assert.equal(ch, ch2)
+        assert.equal(v, 1)
       }).then(cb)
     })
 
@@ -252,72 +247,102 @@ describe('channels', () => {
       }).then(cb)
     })
 
-    it ('should cancel all other channel actions after a resolved', (cb) => {
+    it ('should cancel all other channel actions after one is resolved', (cb) => {
       go(async () => {
-        var foo = chan()
-        var bar = chan()
-        var t = sleepyChan(1000, 1)
-        put(bar, 1)
-        await any(foo, bar, t)
-        put(foo, 2)
-        let val = await take(foo)
-        assert.equal(val, 2)
+
+        var ch1 = chan()
+        var ch2 = chan()
+        var p = sleep(1000)
+
+        put(ch1, 1)
+        await any(ch1, ch2, p)
+
+        put(ch2, 2)
+        let v = await take(ch2)
+
+        assert.equal(v, 2)
       }).then(cb)
     })
 
     it ('should work with takes and puts - put winning', (cb) => {
       go(async () => {
 
-        var forTakes = chan()
-        var forPuts = chan()
-        
-        let gettingFirst = any(forTakes, [ forPuts, 1 ])
-        
-        await take(forPuts)
+        var ch1 = chan()
+        var ch2 = chan()
 
-        let [ v, c ] = await gettingFirst
+        setTimeout(() => take(ch2), 50)
+        
+        let [ v, ch ] = await any(ch1, [ ch2, 1 ])
         
         assert.equal(v, 1)
-        assert.equal(c, forPuts)
+        assert.equal(ch, ch2)
 
-      }).then(cb)
+      }).then(cb, cb)
     })
 
     it ('should work with takes and puts - take winning', (cb) => {
 
       go(async () => {
 
-        let forTakes = chan()
-        let forPuts = chan()
-        
-        let gettingFirst = any(forTakes, [ forPuts, 1 ])
-        
-        await put(forTakes, 2)
+        let ch1 = chan()
+        let ch2 = chan()
+        let ch3 = chan()
+        let p = sleep(100)
 
-        let [ v, c ] = await gettingFirst
+        setTimeout(() => put(ch2, 2), 50)
+        
+        let [ v, ch ] = await any(ch1, ch2, p, [ ch3, 1 ])
         
         assert.equal(v, 2)
-        assert.equal(c, forTakes)
+        assert.equal(ch, ch2)
 
-      }).then(cb)
+      }).then(cb, cb)
     })
 
     it ('should work with raw promises - promise winning', (cb) => {
 
       go(async () => {
 
-        let forTakes = chan()
-        let forPuts = chan()
-        let forPromise = Promise.resolve(3)
+        let ch1 = chan()
+        let ch2 = chan()
+        let p = Promise.resolve(3)
         
-        let gettingFirst = any(forTakes, [ forPuts, 1 ], forPromise)
-        
-        let [ v, c ] = await gettingFirst
+        let [ v, ch ] = await any(ch1, [ ch2, 1 ], p)
         
         assert.equal(v, 3)
-        assert.equal(c, forPromise)
+        assert.equal(ch, p)
 
-      }).then(cb)
+      }).then(cb, cb)
+    })
+
+    it ('should work for typical "timeout" effect', (cb) => {
+
+      go(async () => {
+
+        let input = chan()
+        let timeout = sleep(100)
+
+        let [ v, ch ] = await any(input, timeout, )
+
+        assert.equal(ch, timeout)
+        
+      }).then(cb, cb)
+    })
+
+    it ('should work for typical "timeout" effect - in time', (cb) => {
+
+      go(async () => {
+
+        let input = chan()
+        let timeout = sleep(100)
+
+        setTimeout(() => put(input, 1), 50)
+
+        let [ v, ch ] = await any(input, timeout, )
+
+        assert.equal(ch, input)
+        
+      }).then(cb, cb)
     })
   })
 
