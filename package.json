@@ -4,7 +4,7 @@
   "description": "CSP-style channel library using ES7 async/await keywords",
   "main": "./build/index.js",
   "scripts": {
-    "test": "mocha --watch --compilers js:babel-register",
+    "test": "mocha --watch --reporter spec --compilers js:babel-register",
     "build": "babel ./lib --out-dir ./build",
     "develop": "babel --watch=./lib --out-dir ./build"
   },
