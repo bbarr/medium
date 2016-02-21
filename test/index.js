@@ -5,7 +5,7 @@ import assert from 'assert'
 import sinon from 'sinon'
 import t from 'transducers-js'
 
-import { cancel, merge, sleep, chan, go, put, take, clone, close, CLOSED, any } from '../lib/index'
+import { cancel, merge, sleep, chan, go, put, take, clone, close, CLOSED, any } from '../build/index'
 
 describe('channels', () => {
 

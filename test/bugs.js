@@ -1,7 +1,7 @@
 
 import 'babel-polyfill'
 import assert from 'assert'
-import { chan, put, sleep, go, any } from '../lib/index'
+import { chan, put, sleep, go, any } from '../build/index'
 
 
 describe('bugs reports', () => {

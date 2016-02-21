@@ -2,7 +2,7 @@
 import assert from 'assert'
 import sinon from 'sinon'
 
-import buffers from '../lib/buffers'
+import buffers from '../build/buffers'
 
 var actionStub = () => { 
   return { payload: 1, resolve() { } }
