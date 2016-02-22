@@ -117,7 +117,7 @@ import t from 'transducers-js'
 import { chan, put, take, sleep, go } from '../lib/index'
 
 let numbers = chan()
-let oddNumbers = chan(null, t.filter(n => n % 2)
+let oddNumbers = chan(null, t.filter(n => n % 2))
 
 go(async () => {
   while (true) {
