@@ -10,7 +10,7 @@ npm install medium
 ####First, the requisite ping/pong example
 ```javascript
 
-import { chan, go, put, close, take, sleep, repeatTake, CLOSED } from '../lib/index'
+import { chan, go, put, close, take, sleep, repeatTake, CLOSED } from 'medium'
 
 let player = async (name, table) => {
 
@@ -151,7 +151,7 @@ Things get much more interesting though when we use async/await to better coordi
 
 ```javascript
 import t from 'transducers-js'
-import { chan, put, take, sleep, go } from '../lib/index'
+import { chan, put, take, sleep, go } from 'medium'
 
 let numbers = chan()
 let oddNumbers = chan(null, t.filter(n => n % 2))
@@ -184,7 +184,7 @@ So we have a number being generated every second, and put onto the ```numbers```
 What if we want to keep track of the percent odd vs. even? We can put a bit of local state in the process that checks for oddness. However, mutating state sucks, so, we use the function ```repeat``` to both act as a ```while``` loop and manage state immutably!
 
 ```javascript
-import { chan, put, take, sleep, go, repeat } from '../lib/index'
+import { chan, put, take, sleep, go, repeat } from 'medium'
 
 let numbers = chan()
 let oddNumbers = chan()
