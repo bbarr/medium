@@ -14,20 +14,18 @@ import { chan, go, put, close, take, sleep, repeatTake, CLOSED } from 'medium'
 
 const player = async (name, table) => {
 
-  repeatTake(table, async (ball, state) => {
+  repeatTake(table, async (ball, { hitCount }) => {
 
     if (ball === CLOSED) {
-      console.log(`${name} hit the ball ${state.hitCount} times!`)
+      console.log(`${name} hit the ball ${hitCount} times!`)
       return false // returning false is how you BREAK a repeat or repeatTake
     }
-
-    console.log(name, ball.hits)
 
     await sleep(100)
     put(table, ball)
 
     // return a value to store it as state, and access it as the second argument above
-    return { hitCount: state.hitCount + 1 }
+    return { hitCount: hitCount + 1 }
 
   }, { hitCount: 0 })
 }
