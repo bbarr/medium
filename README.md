@@ -12,7 +12,7 @@ npm install medium
 
 import { chan, go, put, close, take, sleep, repeatTake, CLOSED } from 'medium'
 
-let player = async (name, table) => {
+const player = async (name, table) => {
 
   repeatTake(table, async (ball, state) => {
 
@@ -33,7 +33,7 @@ let player = async (name, table) => {
 }
 
 go(async () => {
-  let table = chan()
+  const table = chan()
   player('ping', table)
   player('pong', table)
   put(table, { hits: 0 })
@@ -48,7 +48,7 @@ go(async () => {
 Channels are queues, you can ```put``` things onto them and ```take``` things off, in a first-in-first-out way. Channels can be closed, after which, they will not receive or deliver values. ```put``` and ```take``` are both asynchronous actions, and return promises. ```put``` promises simply resolve to ```true``` if it was able to successfully add its value to the channel, or ```false``` if the channel is closed. ```take``` promises resolve either to whatever was next in the channel queue, or to the constant ```CLOSED``` if the channel is closed. For example:
 
 ```javascript
-let ch1 = chan()
+const ch1 = chan()
 put(ch1, 1)
 take(ch1).then(::console.log)
 // LOGS: 1
@@ -69,7 +69,7 @@ The strategy with which a channel handles an excess of ```put```s is implemented
 
 ####No buffer
 ```javascript
-let ch1 = chan()
+const ch1 = chan()
 put(ch1, 1).then(() => console.log('put 1'))
 put(ch1, 2).then(() => console.log('put 2'))
 take(ch1)
@@ -82,8 +82,8 @@ An example of a different buffer would be a "fixed" buffer, which has N slots fo
 
 ####Fixed buffer
 ```javascript
-let ch = chan()
-let fixedCh = chan(buffers.fixed(2)) // or shortcut with chan(2)
+const ch = chan()
+const fixedCh = chan(buffers.fixed(2)) // or shortcut with chan(2)
 
 put(ch, 1).then(::console.log)
 // LOGS NOTHING
@@ -105,7 +105,7 @@ The other included buffers are, "dropping", which allows N puts, then begins "dr
 
 ####Dropping buffer
 ```javascript
-let ch = chan(buffers.dropping(2))
+const ch = chan(buffers.dropping(2))
 put(ch, 1)
 put(ch, 2)
 put(ch, 3) // this is dropped
@@ -121,7 +121,7 @@ put(ch, 3)
 
 ####Sliding buffer
 ```javascript
-let ch = chan(buffers.sliding(2))
+const ch = chan(buffers.sliding(2))
 put(ch, 1)
 put(ch, 2)
 put(ch, 3) // this causes the put of 1 to be dropped
@@ -139,7 +139,7 @@ Transducers are the best option here, and are fully supported using Ramda, Trans
 ```javascript
 import t from 'transducers-js'
 
-let shouts = chan(null, t.map(str => `${str}!!!`))
+const shouts = chan(null, t.map(str => `${str}!!!`))
 put(shouts, 'HAI')
 take(shouts).then(::console.log)
 // LOGS: 'HAI!!!'
@@ -153,8 +153,8 @@ Things get much more interesting though when we use async/await to better coordi
 import t from 'transducers-js'
 import { chan, put, take, sleep, go } from 'medium'
 
-let numbers = chan()
-let oddNumbers = chan(null, t.filter(n => n % 2))
+const numbers = chan()
+const oddNumbers = chan(null, t.filter(n => n % 2))
 
 go(async () => {
   while (true) {
@@ -186,9 +186,9 @@ What if we want to keep track of the percent odd vs. even? We can put a bit of l
 ```javascript
 import { chan, put, take, sleep, go, repeat } from 'medium'
 
-let numbers = chan()
-let oddNumbers = chan()
-let stats = chan()
+const numbers = chan()
+const oddNumbers = chan()
+const stats = chan()
 
 go(async () => {
   while (true) {
@@ -206,7 +206,7 @@ go(async () => {
   repeat(async ({ total, odds }) => {
     put(stats, `${odds / total * 100}% odd numbers`)
     
-    let n = await numbers
+    const n = await numbers
     if (n % 2) {
       put(oddNumbers, n)
       return { total: total + 1, odds: odds + 1 }
