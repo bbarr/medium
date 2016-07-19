@@ -7,6 +7,42 @@ CSP-style channel library using ES7 async/await keywords.
 npm install medium
 ```
 
+####First, the requisite ping/pong example
+```javascript
+
+import { chan, go, put, close, take, sleep, repeatTake, CLOSED } from '../lib/index'
+
+let player = async (name, table) => {
+
+  repeatTake(table, async (ball, state) => {
+
+    if (ball === CLOSED) {
+      console.log(`${name} hit the ball ${state.hitCount} times!`)
+      return false // returning false is how you BREAK a repeat or repeatTake
+    }
+
+    console.log(name, ball.hits)
+
+    await sleep(100)
+    put(table, ball)
+
+    // return a value to store it as state, and access it as the second argument above
+    return { hitCount: state.hitCount + 1 }
+
+  }, { hitCount: 0 })
+}
+
+go(async () => {
+  let table = chan()
+  player('ping', table)
+  player('pong', table)
+  put(table, { hits: 0 })
+  await sleep(1000)
+  close(table)
+})
+
+```
+
 ####Channel interactions in a nutshell
 
 Channels are queues, you can ```put``` things onto them and ```take``` things off, in a first-in-first-out way. Channels can be closed, after which, they will not receive or deliver values. ```put``` and ```take``` are both asynchronous actions, and return promises. ```put``` promises simply resolve to ```true``` if it was able to successfully add its value to the channel, or ```false``` if the channel is closed. ```take``` promises resolve either to whatever was next in the channel queue, or to the constant ```CLOSED``` if the channel is closed. For example:
@@ -97,7 +133,8 @@ take(ch).then(::console.log)
 ```
 
 ####Transducers
-Of course, you may need to filter or modify values as they are put onto the channel. Transducers are the best option here, and are fully supported.
+Of course, you may need to filter or modify values as they are put onto the channel. 
+Transducers are the best option here, and are fully supported using Ramda, Transducers, etc.
 
 ```javascript
 import t from 'transducers-js'
@@ -210,43 +247,6 @@ go(async () => {
 ```
 
 So we just change the signature a bit, and our local "repeat" state is passed as the second argument instead of the first. 
-
-####Requisite ping/pong example
-```javascript
-
-import { chan, go, put, close, take, sleep, repeatTake, CLOSED } from '../lib/index'
-
-let player = async (name, table) => {
-
-  repeatTake(table, async (ball, state) => {
-
-    if (ball === CLOSED) {
-      console.log(`${name} hit the ball ${state.hitCount} times!`)
-      return false // returning false is how you BREAK a repeat or repeatTake
-    }
-
-    console.log(name, ball.hits)
-
-    await sleep(100)
-    put(table, ball)
-
-    // return a value to store it as state, and access it as the second argument above
-    return { hitCount: state.hitCount + 1 }
-
-  }, { hitCount: 0 })
-}
-
-go(async () => {
-  let table = chan()
-  player('ping', table)
-  player('pong', table)
-  put(table, { hits: 0 })
-  await sleep(1000)
-  close(table)
-})
-
-```
-
 
 More documentation is coming, but the core functionality is ~160LOC, so it should 
 just take a single cup of coffee to read through. I wanted to be sure that the API was built 

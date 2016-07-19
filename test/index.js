@@ -159,7 +159,7 @@ describe('channels', () => {
       var xduce = t.map((n) => n + 1)
       var opts = { foo: 'bar' }
       var a = chan(bufferOrN, xduce, opts)
-      var b = clone(a)
+      var b = clone(a, null, { debug: true })
       assert.equal(JSON.stringify(a), JSON.stringify(b))
     })
   })

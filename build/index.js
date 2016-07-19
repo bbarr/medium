@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.any = exports.CLOSED = undefined;
+exports.CLOSED = exports.clone = undefined;
 exports.chan = chan;
 exports.take = take;
 exports.put = put;
@@ -11,14 +11,14 @@ exports.cancel = cancel;
 exports.close = close;
 exports.go = go;
 exports.sleep = sleep;
-exports.clone = clone;
 exports.repeat = repeat;
 exports.repeatTake = repeatTake;
 exports.merge = merge;
+exports.any = any;
 
 var _buffers = require('./buffers');
 
-var _buffers2 = _interopRequireDefault(_buffers);
+var buffers = _interopRequireWildcard(_buffers);
 
 var _transducer_support = require('./transducer_support');
 
@@ -26,32 +26,27 @@ var _transducer_support2 = _interopRequireDefault(_transducer_support);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { return step("next", value); }, function (err) { return step("throw", err); }); } } return step("next"); }); }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-// helpers
-var isChan = function isChan(obj) {
-  return obj[IS_CHANNEL];
-};
-var random = function random(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-};
-var isDefined = function isDefined(a) {
-  return typeof a !== 'undefined';
-};
-var findIndexByProp = function findIndexByProp(key, val, arr) {
-  for (var i = 0, len = arr.length; i < len; i++) {
-    if (arr[i][key] === val) return i;
-  }
-};
-
-var CLOSED = exports.CLOSED = Symbol('medium-closed-state');
-var IS_CHANNEL = Symbol('is-channel');
-
 // CORE
+
+// Will hopefully implement Flow here one day, but for now
+// these super informal types can give some hints to us humans
+
+// Channel = Object 
+// Action = Object
+// Buffer = Object
+// BufferConfig = Buffer | Number
+// LazyPut = [ Channel, Any ]
+// AnyInput = Channel | Promise | LazyPut
+
+// BufferConfig -> Function? -> Object? -> Channel
 function chan(bufferOrN) {
   var _ch;
 
@@ -59,7 +54,7 @@ function chan(bufferOrN) {
   var opts = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
 
-  var buffer = typeof bufferOrN === 'number' ? _buffers2.default.fixed(bufferOrN) : bufferOrN || _buffers2.default.base();
+  var buffer = typeof bufferOrN === 'number' ? buffers.fixed(bufferOrN) : bufferOrN || buffers.base();
 
   var ch = (_ch = {}, _defineProperty(_ch, IS_CHANNEL, true), _defineProperty(_ch, 'args', arguments), _defineProperty(_ch, 'opts', opts), _defineProperty(_ch, 'closed', false), _defineProperty(_ch, 'takes', []), _defineProperty(_ch, 'xduce', _transducer_support2.default.transform(xduce)), _defineProperty(_ch, 'buffer', buffer), _defineProperty(_ch, 'then', function then(x, y) {
     return take(ch).then(x, y);
@@ -68,6 +63,7 @@ function chan(bufferOrN) {
   return ch;
 }
 
+// Channel -> Promise
 function take(ch) {
 
   var take = createAction();
@@ -87,6 +83,7 @@ function take(ch) {
   return take.promise;
 }
 
+// Channel -> Any -> Promise
 function put(ch, v) {
 
   var put = createAction({ payload: v });
@@ -114,15 +111,19 @@ function put(ch, v) {
 }
 
 // @TODO improve
+// Takes channel and a promise from a previous put/take. Cancels it.
+// Channel -> Promise
 function cancel(ch, promise) {
 
   var pendingTakeI = findIndexByProp('promise', promise, ch.takes);
   var pendingPutI = findIndexByProp('promise', promise, ch.buffer.unreleased);
 
   if (isDefined(pendingTakeI)) ch.takes.splice(pendingTakeI, 1);
+
   if (isDefined(pendingPutI) && ch.buffer.unreleased) ch.buffer.unreleased.splice(pendingPutI, 1);
 }
 
+// Channel -> Channel
 function close(ch) {
   var currPut;
   while (currPut = ch.buffer.shift()) {
@@ -132,48 +133,37 @@ function close(ch) {
     return t.resolve(CLOSED);
   });
   ch.closed = true;
+  return ch;
 }
 
+// Channel -> Action -> Action
 function run(ch, put, take) {
   take.resolve(put.payload);
   put.resolve(true);
 }
 
+// AsyncFunction -> Promise
 function go(afn) {
   return afn();
 }
 
+// Number -> Promise
 function sleep(ms) {
   return new Promise(function (res) {
     setTimeout(res, ms);
   });
 }
 
-function clone(src) {
+// Channel -> Channel
+var clone = exports.clone = function clone(src) {
   return chan.apply(undefined, _toConsumableArray(src.args));
-}
+};
 
-function createAction() {
-  var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-
-  var _resolve = undefined;
-
-  return {
-    payload: config.payload,
-    resolve: function resolve(payload) {
-      return _resolve(payload);
-    },
-    promise: new Promise(function (res) {
-      return _resolve = res;
-    })
-  };
-}
-
+// AsyncFunction -> Any -> Promise
 function repeat(afn, seed) {
   var _this = this;
 
-  go(_asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+  return go(_asyncToGenerator(regeneratorRuntime.mark(function _callee() {
     var result;
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
@@ -182,8 +172,8 @@ function repeat(afn, seed) {
             result = seed;
 
           case 1:
-            if (!true) {
-              _context.next = 9;
+            if (!(result !== false)) {
+              _context.next = 7;
               break;
             }
 
@@ -192,19 +182,10 @@ function repeat(afn, seed) {
 
           case 4:
             result = _context.sent;
-
-            if (!(result === false)) {
-              _context.next = 7;
-              break;
-            }
-
-            return _context.abrupt('break', 9);
-
-          case 7:
             _context.next = 1;
             break;
 
-          case 9:
+          case 7:
           case 'end':
             return _context.stop();
         }
@@ -213,10 +194,11 @@ function repeat(afn, seed) {
   })));
 }
 
+// Channel -> AsyncFunction -> Any -> Promise
 function repeatTake(ch, afn, seed) {
   var _this2 = this;
 
-  go(_asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+  return go(_asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
     var result, item;
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
@@ -225,8 +207,8 @@ function repeatTake(ch, afn, seed) {
             result = seed;
 
           case 1:
-            if (!true) {
-              _context2.next = 12;
+            if (!(result !== false)) {
+              _context2.next = 10;
               break;
             }
 
@@ -240,19 +222,10 @@ function repeatTake(ch, afn, seed) {
 
           case 7:
             result = _context2.sent;
-
-            if (!(result === false)) {
-              _context2.next = 10;
-              break;
-            }
-
-            return _context2.abrupt('break', 12);
-
-          case 10:
             _context2.next = 1;
             break;
 
-          case 12:
+          case 10:
           case 'end':
             return _context2.stop();
         }
@@ -261,6 +234,7 @@ function repeatTake(ch, afn, seed) {
   })));
 }
 
+// ...Channel -> Channel
 function merge() {
   var _this3 = this;
 
@@ -273,7 +247,7 @@ function merge() {
 
   chs.forEach(function (ch) {
     repeatTake(ch, function () {
-      var ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee3(v) {
+      var _ref3 = _asyncToGenerator(regeneratorRuntime.mark(function _callee3(v) {
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -296,11 +270,10 @@ function merge() {
             }
           }
         }, _callee3, _this3);
-      })),
-          _this = _this3;
+      }));
 
-      return function (_x4) {
-        return ref.apply(_this, arguments);
+      return function (_x3) {
+        return _ref3.apply(this, arguments);
       };
     }());
   });
@@ -308,77 +281,111 @@ function merge() {
   return out;
 }
 
-// @TODO improve
-var any = exports.any = function () {
+// AnyInput -> Promise
+function any() {
+  var _this4 = this;
 
-  var isTake = isChan;
-  var isPromise = function isPromise(port) {
-    return port instanceof Promise;
-  };
-  var isPut = function isPut(port) {
-    return Array.isArray(port);
-  };
+  for (var _len2 = arguments.length, ports = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+    ports[_key2] = arguments[_key2];
+  }
 
-  var isResolvable = function isResolvable(port) {
-    if (isPromise(port)) return false;
-    if (isTake(port)) return !port.buffer.isEmpty();
-    if (isPut(port)) return port[0].takes.length;
-  };
+  var alreadyReady = ports.filter(isResolvable);
 
-  var format = function format(port) {
-    if (!isPut(port)) return port.then(function (v) {
-      return [v, port];
-    });
-    return put(port[0], port[1]).then(function (v) {
-      return [v, port[0]];
-    });
-  };
+  if (alreadyReady.length > 0) return resolveLazyPuts(random(alreadyReady));
 
-  return function () {
-    for (var _len2 = arguments.length, ports = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-      ports[_key2] = arguments[_key2];
-    }
+  return new Promise(function (res) {
 
     var promises = [];
-    var alreadyReady = ports.filter(isResolvable);
+    ports.forEach(function (port, i) {
+      go(_asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+        var promise;
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                promise = resolveLazyPuts(port);
 
-    if (alreadyReady.length > 0) return format(random(alreadyReady));
+                promises.push(promise);
+                _context4.next = 4;
+                return promise;
 
-    return new Promise(function (res) {
-
-      ports.forEach(function (port, i) {
-        go(_asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
-          var promise;
-          return regeneratorRuntime.wrap(function _callee4$(_context4) {
-            while (1) {
-              switch (_context4.prev = _context4.next) {
-                case 0:
-                  promise = format(port);
-
-                  promises.push(promise);
-                  _context4.next = 4;
-                  return promise;
-
-                case 4:
-                  _context4.t0 = _context4.sent;
-                  res(_context4.t0);
+              case 4:
+                _context4.t0 = _context4.sent;
+                res(_context4.t0);
 
 
-                  // cancel all other cancelable actions!
-                  ports.forEach(function (p) {
-                    if (p === port) return;
-                    if (isPromise(port)) return;
-                    cancel(p[0] || p, promises[i]);
-                  });
+                // cancel all other cancelable actions!
+                ports.forEach(function (p) {
+                  if (p === port) return;
+                  if (isPromise(port)) return;
+                  cancel(p[0] || p, promises[i]);
+                });
 
-                case 7:
-                case 'end':
-                  return _context4.stop();
-              }
+              case 7:
+              case 'end':
+                return _context4.stop();
             }
-          }, _callee4, undefined);
-        })));
-      });
+          }
+        }, _callee4, _this4);
+      })));
     });
+  });
+}
+
+// HELPERS
+
+var CLOSED = exports.CLOSED = Symbol('medium-closed-state');
+var IS_CHANNEL = Symbol('is-channel');
+
+var isChan = function isChan(obj) {
+  return obj[IS_CHANNEL];
+};
+var random = function random(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+};
+var isDefined = function isDefined(a) {
+  return typeof a !== 'undefined';
+};
+var isPromise = function isPromise(port) {
+  return port instanceof Promise;
+};
+var isPut = function isPut(port) {
+  return Array.isArray(port);
+};
+
+var isResolvable = function isResolvable(port) {
+  if (isPromise(port)) return false;
+  if (isChan(port)) return !port.buffer.isEmpty();
+  if (isPut(port)) return port[0].takes.length;
+};
+
+var resolveLazyPuts = function resolveLazyPuts(port) {
+  if (!isPut(port)) return port.then(function (v) {
+    return [v, port];
+  });
+  return put(port[0], port[1]).then(function (v) {
+    return [v, port[0]];
+  });
+};
+
+var createAction = function createAction() {
+  var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+  var _resolve = void 0;
+  return {
+    payload: config.payload,
+    resolve: function resolve(payload) {
+      return _resolve(payload);
+    },
+    promise: new Promise(function (res) {
+      return _resolve = res;
+    })
   };
-}();
+};
+
+// ugly for speed
+var findIndexByProp = function findIndexByProp(key, val, arr) {
+  for (var i = 0, len = arr.length; i < len; i++) {
+    if (arr[i][key] === val) return i;
+  }
+};
