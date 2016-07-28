@@ -55,7 +55,6 @@ function chan(bufferOrN, xduce) {
   return ch;
 }
 
-// Channel -> Promise
 function take(ch) {
 
   var take = createAction();
@@ -75,7 +74,6 @@ function take(ch) {
   return take.promise;
 }
 
-// Channel -> Any -> Promise
 function put(ch, v) {
 
   var put = createAction({ payload: v });
@@ -104,7 +102,6 @@ function put(ch, v) {
 
 // @TODO improve
 // Takes channel and a promise from a previous put/take. Cancels it.
-// Channel -> Promise
 function cancel(ch, promise) {
 
   // cancel takes
@@ -116,7 +113,6 @@ function cancel(ch, promise) {
   if (isDefined(pendingPutI) && ch.buffer.unreleased) ch.buffer.unreleased.splice(pendingPutI, 1);
 }
 
-// Channel -> Channel
 function close(ch) {
   var currPut;
   while (currPut = ch.buffer.shift()) {
@@ -129,30 +125,25 @@ function close(ch) {
   return ch;
 }
 
-// Channel -> Action -> Action
 function run(ch, put, take) {
   take.resolve(put.payload);
   put.resolve(true);
 }
 
-// AsyncFunction -> Promise
 function go(afn) {
   return afn();
 }
 
-// Number -> Promise
 function sleep(ms) {
   return new Promise(function (res) {
     setTimeout(res, ms);
   });
 }
 
-// Channel -> Channel
 var clone = exports.clone = function clone(src) {
   return chan.apply(undefined, _toConsumableArray(src.args));
 };
 
-// AsyncFunction -> Any -> Promise
 function repeat(afn, seed) {
   var _this = this;
 
@@ -187,7 +178,6 @@ function repeat(afn, seed) {
   })));
 }
 
-// Channel -> AsyncFunction -> Any -> Promise
 function repeatTake(ch, afn, seed) {
   var _this2 = this;
 
@@ -227,7 +217,6 @@ function repeatTake(ch, afn, seed) {
   })));
 }
 
-// ...Channel -> Channel
 function merge() {
   var _this3 = this;
 
@@ -274,7 +263,6 @@ function merge() {
   return out;
 }
 
-// AnyInput -> Promise
 function any() {
   var _this4 = this;
 
