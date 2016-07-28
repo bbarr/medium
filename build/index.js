@@ -32,33 +32,25 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 // CORE
 
-// Will hopefully implement Flow here one day, but for now
-// these super informal types can give some hints to us humans
-
-// Channel = Object 
-// Action = Object
-// Buffer = Object
-// BufferConfig = Buffer | Number
-// LazyPut = [ Channel, Any ]
-// AnyInput = Channel | Promise | LazyPut
-
-// BufferConfig -> Function? -> Object? -> Channel
-function chan(bufferOrN) {
-  var _ch;
-
-  var xduce = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+function chan(bufferOrN, xduce) {
   var opts = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
 
   var buffer = typeof bufferOrN === 'number' ? buffers.fixed(bufferOrN) : bufferOrN || buffers.base();
 
-  var ch = (_ch = {}, _defineProperty(_ch, IS_CHANNEL, true), _defineProperty(_ch, 'args', arguments), _defineProperty(_ch, 'opts', opts), _defineProperty(_ch, 'closed', false), _defineProperty(_ch, 'takes', []), _defineProperty(_ch, 'xduce', _transducer_support2.default.transform(xduce)), _defineProperty(_ch, 'buffer', buffer), _defineProperty(_ch, 'then', function then(x, y) {
-    return take(ch).then(x, y);
-  }), _ch);
+  var ch = {
+    isClosed: false,
+    args: arguments,
+    opts: opts,
+    takes: [],
+    xduce: _transducer_support2.default.transform(xduce),
+    buffer: buffer,
+    then: function then(x, y) {
+      return take(ch).then(x, y);
+    }
+  };
 
   return ch;
 }
@@ -68,7 +60,7 @@ function take(ch) {
 
   var take = createAction();
 
-  if (ch.closed) {
+  if (ch.isClosed) {
     take.resolve(CLOSED);
     return take.promise;
   }
@@ -88,7 +80,7 @@ function put(ch, v) {
 
   var put = createAction({ payload: v });
 
-  if (ch.closed) {
+  if (ch.isClosed) {
     put.resolve(false);
     return put.promise;
   }
@@ -115,11 +107,12 @@ function put(ch, v) {
 // Channel -> Promise
 function cancel(ch, promise) {
 
+  // cancel takes
   var pendingTakeI = findIndexByProp('promise', promise, ch.takes);
-  var pendingPutI = findIndexByProp('promise', promise, ch.buffer.unreleased);
-
   if (isDefined(pendingTakeI)) ch.takes.splice(pendingTakeI, 1);
 
+  // cancel puts
+  var pendingPutI = findIndexByProp('promise', promise, ch.buffer.unreleased);
   if (isDefined(pendingPutI) && ch.buffer.unreleased) ch.buffer.unreleased.splice(pendingPutI, 1);
 }
 
@@ -132,7 +125,7 @@ function close(ch) {
   ch.takes.forEach(function (t) {
     return t.resolve(CLOSED);
   });
-  ch.closed = true;
+  ch.isClosed = true;
   return ch;
 }
 
@@ -272,7 +265,7 @@ function merge() {
         }, _callee3, _this3);
       }));
 
-      return function (_x3) {
+      return function (_x2) {
         return _ref3.apply(this, arguments);
       };
     }());
@@ -334,11 +327,9 @@ function any() {
 
 // HELPERS
 
-var CLOSED = exports.CLOSED = Symbol('medium-closed-state');
-var IS_CHANNEL = Symbol('is-channel');
-
+var CLOSED = exports.CLOSED = Symbol('MEDIUM_CLOSED');
 var isChan = function isChan(obj) {
-  return obj[IS_CHANNEL];
+  return !!obj && !!obj.buffer && !!obj.then;
 };
 var random = function random(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -356,7 +347,8 @@ var isPut = function isPut(port) {
 var isResolvable = function isResolvable(port) {
   if (isPromise(port)) return false;
   if (isChan(port)) return !port.buffer.isEmpty();
-  if (isPut(port)) return port[0].takes.length;
+  if (isPut(port)) return !!port[0].takes.length;
+  return false;
 };
 
 var resolveLazyPuts = function resolveLazyPuts(port) {
@@ -384,8 +376,11 @@ var createAction = function createAction() {
 };
 
 // ugly for speed
-var findIndexByProp = function findIndexByProp(key, val, arr) {
+var findIndexByProp = function findIndexByProp(key, val) {
+  var arr = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
+
   for (var i = 0, len = arr.length; i < len; i++) {
     if (arr[i][key] === val) return i;
   }
+  return -1;
 };

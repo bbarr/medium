@@ -18,7 +18,7 @@ var base = exports.base = function base() {
 	};
 };
 
-var fixed = exports.fixed = function fixed(limit, xduce) {
+var fixed = exports.fixed = function fixed(limit) {
 	return {
 		unreleased: [],
 		released: [],

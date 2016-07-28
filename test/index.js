@@ -168,9 +168,9 @@ describe('channels', () => {
 
     it ('should set channel closed property to true', () => {
       var ch = chan()
-      assert(!ch.closed)
+      assert(!ch.isClosed)
       close(ch)
-      assert(ch.closed)
+      assert(ch.isClosed)
     })
 
     it ('should cause all puts to resolve to false immediately', (cb) => {
@@ -420,12 +420,12 @@ describe('channels', () => {
       var merged = merge(a, b, c)
       
       go(async () => {
-        assert.equal(merged.closed, false)
+        assert.equal(merged.isClosed, false)
         close(a)
         close(b)
         close(c)
       })
-      .then(() => assert.equal(merged.closed, true))
+      .then(() => assert.equal(merged.isClosed, true))
       .then(cb)
     })
   })
