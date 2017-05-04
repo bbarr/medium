@@ -1,5 +1,5 @@
 
-type Channel = {
+declare type Channel = {
   isClosed: bool,
   args: Array<any>,
   opts: Object,
@@ -9,18 +9,18 @@ type Channel = {
   then: (a: Function, b: Function) => Promise<any>
 }
 
-type Action = {
+declare type Action = {
   payload: any,
   resolve: (payload: any) => void,
   promise: Promise<any>
 }
 
-type Buffer = {
+declare type Buffer = {
   unreleased?: Array<Action>,
   released?: Array<Action>,
   push: (a: Action) => void,
   shift: () => ?Action,
-  isEmpty: () => number
+  isEmpty: () => boolean
 }
 
-type BufferConfig = Buffer | number
+declare type BufferConfig = Buffer | number

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.CLOSED = exports.clone = undefined;
+exports.CLOSED = exports.clone = exports.buffers = undefined;
 exports.chan = chan;
 exports.take = take;
 exports.put = put;
@@ -16,9 +16,9 @@ exports.repeatTake = repeatTake;
 exports.merge = merge;
 exports.any = any;
 
-var _buffers = require('./buffers');
+var _buffers2 = require('./buffers');
 
-var buffers = _interopRequireWildcard(_buffers);
+var _buffers = _interopRequireWildcard(_buffers2);
 
 var _transducer_support = require('./transducer_support');
 
@@ -34,11 +34,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 // CORE
 
+var buffers = exports.buffers = _buffers;
+
 function chan(bufferOrN, xduce) {
   var opts = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
 
-  var buffer = typeof bufferOrN === 'number' ? buffers.fixed(bufferOrN) : bufferOrN || buffers.base();
+  var buffer = typeof bufferOrN === 'number' ? _buffers.fixed(bufferOrN) : bufferOrN || _buffers.base();
 
   var ch = {
     isClosed: false,
@@ -298,7 +300,7 @@ function any() {
                 // cancel all other cancelable actions!
                 ports.forEach(function (p) {
                   if (p === port) return;
-                  if (isPromise(port)) return;
+                  if (isPromise(p)) return;
                   cancel(p[0] || p, promises[i]);
                 });
 

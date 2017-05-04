@@ -6,7 +6,7 @@
   "scripts": {
     "test": "./node_modules/.bin/mocha --watch --reporter spec --compilers js:babel-register",
     "build": "./node_modules/.bin/babel ./lib --out-dir ./build",
-    "develop": "./node_modules/.bin/babel --watch=./lib --out-dir ./build",
+    "dev": "./node_modules/.bin/babel --watch=./lib --out-dir ./build",
     "flow": "flow; test $? -eq 0 -o $? -eq 2"
   },
   "repository": {

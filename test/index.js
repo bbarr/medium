@@ -5,7 +5,7 @@ import assert from 'assert'
 import sinon from 'sinon'
 import t from 'transducers-js'
 
-import { cancel, merge, sleep, chan, go, put, take, clone, close, CLOSED, any } from '../build/index'
+import { cancel, merge, sleep, chan, go, put, take, clone, close, CLOSED, any } from '../lib/index'
 
 describe('channels', () => {
 
@@ -34,10 +34,10 @@ describe('channels', () => {
 
       take(ch).then((val) => expected = val)
 
-      process.nextTick(() => {
-        assert(expected === 1)
+      setTimeout(() => {
+        assert.equal(expected, 1)
         cb()
-      })
+      }, 100)
     })
 
     it ('should work in async function', (cb) => {
