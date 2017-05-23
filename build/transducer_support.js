@@ -1,32 +1,25 @@
-"use strict";
+//      
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-function transformer() {
+function transformer()       {
   return {
-    "@@transducer/init": function transducerInit() {
-      throw new Error('init not available');
-    },
-    "@@transducer/result": function transducerResult(v) {
-      return v;
-    },
-    '@@transducer/step': function transducerStep(arr, input) {
-      arr.push(input);
-      return arr;
+    "@@transducer/init"()        { throw new Error('init not available') },
+    "@@transducer/result"(v     )       { return v },
+    '@@transducer/step'(arr            , input     )              { 
+      arr.push(input)
+      return arr
     }
-  };
+  }
 }
 
-exports.default = {
+module.exports = {
 
-  transformer: transformer,
+  transformer,
 
-  transform: function transform(xduce) {
-    return xduce ? xduce(transformer()) : transformer();
+  transform(xduce           )          {
+    return xduce ? xduce(transformer()) : transformer()
   },
-  apply: function apply(xduce, val) {
-    return xduce['@@transducer/step']([], val)[0];
+
+  apply(xduce, val) {
+    return xduce['@@transducer/step']([], val)[0]
   }
-};
+}

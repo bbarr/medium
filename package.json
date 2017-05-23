@@ -1,12 +1,14 @@
 {
   "name": "medium",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "CSP-style channel library using ES7 async/await keywords",
   "main": "./build/index.js",
+  "engines": {
+    "node": "7.x.x"
+  },
   "scripts": {
-    "test": "./node_modules/.bin/mocha --watch --reporter spec --compilers js:babel-register",
-    "build": "./node_modules/.bin/babel ./lib --out-dir ./build",
-    "dev": "./node_modules/.bin/babel --watch=./lib --out-dir ./build",
+    "test": "mocha --watch --reporter spec --compilers js:babel-register",
+    "build": "flow-remove-types --out-dir build lib/",
     "flow": "flow; test $? -eq 0 -o $? -eq 2"
   },
   "repository": {
@@ -27,16 +29,12 @@
   },
   "license": "ISC",
   "devDependencies": {
-    "babel-cli": "^6.5.1",
-    "babel-plugin-transform-flow-strip-types": "^6.8.0",
-    "babel-polyfill": "^6.5.0",
-    "babel-preset-es2015": "^6.5.0",
-    "babel-preset-stage-0": "^6.5.0",
-    "babel-register": "^6.5.2",
     "flow-bin": "^0.29.0",
     "mocha": "^2.4.5",
     "sinon": "^1.15.3",
-    "transducers-js": "^0.4.174"
+    "transducers-js": "^0.4.174",
+    "flow-remove-types": "^1.2.1"
   },
-  "dependencies": {}
+  "dependencies": {
+  }
 }
