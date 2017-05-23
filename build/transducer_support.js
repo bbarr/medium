@@ -15,11 +15,11 @@ module.exports = {
 
   transformer,
 
-  transform(xduce           )          {
+  transform(xduce     )          {
     return xduce ? xduce(transformer()) : transformer()
   },
 
-  apply(xduce, val) {
+  apply(xduce     , val     ) {
     return xduce['@@transducer/step']([], val)[0]
   }
 }

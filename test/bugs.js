@@ -1,7 +1,6 @@
 
-import 'babel-polyfill'
-import assert from 'assert'
-import { chan, put, sleep, go, any } from '../build/index'
+const assert = require('assert')
+const { chan, put, sleep, go, any } = require('../build/index')
 
 
 describe('bugs reports', () => {

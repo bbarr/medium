@@ -1,8 +1,8 @@
 
-import assert from 'assert'
-import sinon from 'sinon'
+const assert = require('assert')
+const sinon = require('sinon')
 
-import * as buffers from '../build/buffers'
+const buffers = require('../build/buffers')
 
 var actionStub = () => { 
   return { payload: 1, resolve() { } }

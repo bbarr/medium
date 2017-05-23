@@ -1,11 +1,9 @@
 
-import 'babel-polyfill'
+const assert = require('assert')
+const sinon = require('sinon')
+const t = require('transducers-js')
 
-import assert from 'assert'
-import sinon from 'sinon'
-import t from 'transducers-js'
-
-import { cancel, merge, sleep, chan, go, put, take, clone, close, CLOSED, any } from '../lib/index'
+const { cancel, merge, sleep, chan, go, put, take, clone, close, CLOSED, any } = require('../build/index')
 
 describe('channels', () => {
 
@@ -322,7 +320,7 @@ describe('channels', () => {
         let input = chan()
         let timeout = sleep(100)
 
-        let [ v, ch ] = await any(input, timeout, )
+        let [ v, ch ] = await any(input, timeout)
 
         assert.equal(ch, timeout)
         
@@ -338,7 +336,7 @@ describe('channels', () => {
 
         setTimeout(() => put(input, 1), 50)
 
-        let [ v, ch ] = await any(input, timeout, )
+        let [ v, ch ] = await any(input, timeout)
 
         assert.equal(ch, input)
         

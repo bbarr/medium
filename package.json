@@ -7,7 +7,7 @@
     "node": "7.x.x"
   },
   "scripts": {
-    "test": "mocha --watch --reporter spec --compilers js:babel-register",
+    "test": "mocha --watch --reporter spec --harmony",
     "build": "flow-remove-types --out-dir build lib/",
     "flow": "flow; test $? -eq 0 -o $? -eq 2"
   },
