@@ -7,46 +7,35 @@ CSP-style channel library using ES7 async/await keywords.
 npm install medium
 ```
 
-#### First, the requisite naive ping/pong example
+#### First, the requisite naive ping/pong example (ported from Go)
 ```javascript
 
 const { chan, put, close, take, sleep, CLOSED } = require('medium')
 
 const player = async (name, table) => {
-
-  let hitCount = 0
-
   while (true) {
 
-    const totalHitCount = await take(table)
-    console.log(`${name} received the ball`)
-  
-    // make sure the game is still going
-    if (ball === CLOSED) {
-      console.log(`Game is over... ${name} hit the ball ${hitCount} times!`)
-      break;
-    }
-    
-    // return the ball!
-    put(table, totalHitCount + 1)
+    const ball = await take(table)
+    if (ball === CLOSED) break
 
-    // tally up another hit for yourself
-    hitCount++
-
-    // emulate the time spent waiting for opponent to return the ball
+    ball.hits++
+    console.log(`${name} ${ball.hits}`)
     await sleep(100)
+    put(table, ball)
   }
 }
 
 const start = async () => {
+
   const table = chan()
-  const totalHitCount = 0
+
   player('ping', table)
   player('pong', table)
-  put(table, totalHitCount)
+
+  put(table, { hits: 0 })
   await sleep(1000)
+
   close(table)
-  console.log(`Game is over... the ball was hit a total of ${totalHitCount} times!`)
 }
 
 start()
