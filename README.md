@@ -7,7 +7,7 @@ CSP-style channel library using ES7 async/await keywords.
 npm install medium
 ```
 
-#### First, the requisite naive ping/pong example (ported from Go)
+#### First, the requisite naive ping/pong example (ported from [https://talks.golang.org/2013/advconc.slide#6](Go))
 ```javascript
 
 const { chan, put, close, take, sleep, CLOSED } = require('medium')
