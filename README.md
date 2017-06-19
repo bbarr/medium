@@ -7,37 +7,49 @@ CSP-style channel library using ES7 async/await keywords.
 npm install medium
 ```
 
-#### First, the requisite ping/pong example
+#### First, the requisite naive ping/pong example
 ```javascript
 
-import { chan, go, put, close, take, sleep, repeatTake, CLOSED } from 'medium'
+const { chan, put, close, take, sleep, CLOSED } = require('medium')
 
 const player = async (name, table) => {
 
-  repeatTake(table, async (ball, { hitCount }) => {
+  let hitCount = 0
 
+  while (true) {
+
+    const totalHitCount = await take(table)
+    console.log(`${name} received the ball`)
+  
+    // make sure the game is still going
     if (ball === CLOSED) {
-      console.log(`${name} hit the ball ${hitCount} times!`)
-      return false // returning false is how you BREAK a repeat or repeatTake
+      console.log(`Game is over... ${name} hit the ball ${hitCount} times!`)
+      break;
     }
+    
+    // return the ball!
+    put(table, totalHitCount + 1)
 
+    // tally up another hit for yourself
+    hitCount++
+
+    // emulate the time spent waiting for opponent to return the ball
     await sleep(100)
-    put(table, ball)
-
-    // return a value to store it as state, and access it as the second argument above
-    return { hitCount: hitCount + 1 }
-
-  }, { hitCount: 0 })
+  }
 }
 
-go(async () => {
+const start = async () => {
   const table = chan()
+  const totalHitCount = 0
   player('ping', table)
   player('pong', table)
-  put(table, { hits: 0 })
+  put(table, totalHitCount)
   await sleep(1000)
   close(table)
-})
+  console.log(`Game is over... the ball was hit a total of ${totalHitCount} times!`)
+}
+
+start()
 
 ```
 
@@ -54,6 +66,8 @@ take(ch1).then(::console.log)
 take(ch1).then(::console.log)
 put(ch1, 2)
 // LOGS: 2
+
+// Notice how it doesn't matter what order the take and put occur in. This is the secret sauce of coordinating asynchronous activites.
 
 take(ch1).then(::console.log)
 close(ch1)
