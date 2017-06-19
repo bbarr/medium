@@ -9,8 +9,7 @@ module.exports = qName => ({
   },
 
   push(put) {
-    put._buffer_id = Math.round(Math.random() * 100000)
-    q.create(qName, { id: put._buffer_id, payload: put.payload }).save((e) => {
+    q.create(qName, { payload: put.payload }).save((e) => {
       put.resolve(true)
     })
   },
@@ -18,8 +17,7 @@ module.exports = qName => ({
   shift() {
     return new Promise((res, rej) => {
       q.process(qName, 1, (job, done) => {
-        const put = job.data
-        res(put) 
+        res(put.data) 
       })
     })
   }
