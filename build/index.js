@@ -37,6 +37,15 @@ function take(ch         )                {
   }
 
   var put = ch.buffer.shift()
+
+  // allow buffers to return promises for persistent channels
+  if (put && put.then) {
+    return put.then(_put => {
+      run(ch, _put, take)
+      return take.promise
+    })
+  }
+
   if (put) {
     run(ch, put, take)
   } else {
@@ -99,7 +108,7 @@ function close(ch         )           {
 
 function run(ch         , put        , take        )        {
   take.resolve(put.payload)
-  put.resolve(true)
+  put.resolve && put.resolve(true)
 }
 
 function go(afn          )                { return afn() }
