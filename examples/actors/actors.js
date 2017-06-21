@@ -1,14 +1,8 @@
 
-import km from 'kismatch'
-import { chan, go, put, close, sleep, repeatTake } from '../../lib/index'
+const km = require('kismatch').default
+const { chan, go, put, close, sleep, repeatTake } = require('../../build/index')
+const buffer = require('../redis/buffer')
 
-let cast = (actor, payload) => put(actor.mailbox, payload)
-let kill = actor => actor.kill()
-let spawn = actor => {
-  let mailbox = chan()
-  actor(mailbox)
-  return { mailbox }
-}
 
 let counter = (mailbox) => {
 

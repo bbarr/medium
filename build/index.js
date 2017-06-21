@@ -38,16 +38,15 @@ function take(ch         )                {
 
   var put = ch.buffer.shift()
 
-  // allow buffers to return promises for persistent channels
-  if (put && put.then) {
-    return put.then(_put => {
-      run(ch, _put, take)
-      return take.promise
-    })
-  }
-
   if (put) {
-    run(ch, put, take)
+    if (put.then) {
+      return put.then(_put => {
+        run(ch, _put, take)
+        return take.promise
+      })
+    } else {
+      run(ch, put, take)
+    }
   } else {
     ch.takes.push(take)
   }
@@ -71,9 +70,9 @@ function put(ch         , v     )                {
     return put.promise
   }
 
-  var take = ch.takes.shift()
-  if (take) {
-    run(ch, put, take)
+  var queuedTake = ch.takes.shift()
+  if (queuedTake) {
+    run(ch, put, queuedTake)
   } else {
     ch.buffer.push(put)
   }
@@ -126,7 +125,7 @@ const clone = (src         )           => {
 function repeat(afn          , seed     )                {
   return go(async () => {
     var result = seed
-    while (result !== false) {
+    while (result !== CLOSED) {
       result = await afn(result)
     }
   })
@@ -135,7 +134,7 @@ function repeat(afn          , seed     )                {
 function repeatTake(ch         , afn          , seed     )                {
   return go(async () => {
     let result = seed
-    while (result !== false) {
+    while (result !== CLOSED) {
       let item = await take(ch)
       result = await afn(item, result)
     }
@@ -152,7 +151,7 @@ function merge(...chs                )           {
       if (v === CLOSED) {
         closedCount++
         if (closedCount === chs.length) close(out)
-          return false
+          return CLOSED
       }
       put(out, v)
     })
@@ -161,9 +160,14 @@ function merge(...chs                )           {
   return out
 }
 
-function any(...ports            )                {
+async function any(...ports            )                {
 
-  const alreadyReady = ports.filter(isResolvable)
+  let alreadyReady = []
+  await Promise.all(
+    ports.map(async (port) => {
+      if (await isResolvable(port)) alreadyReady.push(port)
+    })
+  )
 
   if (alreadyReady.length > 0) 
     return resolveLazyPuts(random(alreadyReady))
@@ -197,7 +201,7 @@ const isDefined = (a     )        => typeof a !== 'undefined'
 const isPromise = (port     )        => port instanceof Promise
 const isPut = (port     )        => Array.isArray(port)
 
-const isResolvable = (port     )        => {
+const isResolvable = async (port     )                 => {
   if (isPromise(port)) return false
   if (isChan(port)) return !port.buffer.isEmpty()
   if (isPut(port)) return !!port[0].takes.length

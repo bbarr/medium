@@ -427,5 +427,46 @@ describe('channels', () => {
       .then(cb)
     })
   })
+
+  describe('async buffers', () => {
+
+    const buffer = {
+      list: [],
+      isEmpty: async () => {
+        await sleep(100)
+        return buffer.list.length
+      },
+      push: async (put) => {
+        await sleep(100)
+        buffer.list.push({ payload: put.payload })
+        put.resolve(true)
+      },
+      shift: async () => {
+        await sleep(100)
+        return buffer.list.shift()
+      }
+    }
+  
+    it ('should work', async (done) => {
+      
+      const a = chan(buffer)
+      const b = chan(buffer)
+      
+      put(b, 2)
+      await take(a)
+
+      put(b, 2)
+      await take(a)
+
+      put(b, 2)
+
+      const x = await take(a)
+
+      assert.equal(x, 2)
+
+      done()
+    })
+
+  })
 })
 
