@@ -467,6 +467,20 @@ describe('channels', () => {
       done()
     })
 
+    it ('should close just itself', async (done) => {
+      
+      const a = chan(buffer)
+      const b = chan(buffer)
+
+      await put(a, 1)
+
+      close(a)
+
+      assert.equal(await take(a), CLOSED)
+      assert.equal(await take(b), 1)
+
+      return done()
+    })
   })
 })
 

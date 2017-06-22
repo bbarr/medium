@@ -97,11 +97,18 @@ function cancel(ch         , promise              )        {
 
 function close(ch         )           {
   var currPut;
-  while (currPut = ch.buffer.shift()) {
-    currPut.resolve(false)
+
+  // don't bother canceling async buffers
+  if (!ch.buffer.isEmpty().then) {
+    while (currPut = ch.buffer.shift()) {
+      currPut.resolve(false)
+    }
   }
+
   ch.takes.forEach((t) => t.resolve(CLOSED))
   ch.isClosed = true
+  ch.buffer.close && ch.buffer.close()
+
   return ch
 }
 

@@ -1,30 +1,39 @@
 
-const kue = require('kue')
-const q = kue.createQueue()
+const Queue = require('bull')
+const { chan, take, put } = require('../../build/index')
 
-module.exports = qName => ({
+module.exports = qName => {
 
-  isEmpty() {
-    return new Promise((res, rej) => {
-      q.inactiveCount((e, total) => {
-        res(total === 0)
-      })
-    })
-  },
+  const q = new Queue(qName)
 
-  push(put) {
-    const job = q
-      .create(qName, { payload: put.payload })
-      .removeOnComplete(true)
-      .save(() => put.resolve(true))
-  },
+  return ({
 
-  shift() {
-    return new Promise((res, rej) => {
-      q.process(qName, 1, (job, done) => {
-        res(job.data) 
-        done()
-      })
-    })
-  }
-})
+    isEmpty() {
+      return q.count()
+    },
+
+    async push(put) {
+      await q.add({ payload: put.payload }, { removeOnComplete: true })
+      put.resolve(true)
+    },
+
+    shift: (() => {
+
+      const processed = chan()
+      let first = true
+
+      return () => {
+
+        if (first) {
+          first = false
+          q.process(async (job) => {
+            console.log('processing (pushing to buffer)', job.data)
+            await put(processed, job.data)
+          })
+        }
+
+        return take(processed)
+      }
+    })()
+  })
+}
