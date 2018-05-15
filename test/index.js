@@ -3,7 +3,7 @@ const assert = require('assert')
 const sinon = require('sinon')
 const t = require('transducers-js')
 
-const { cancel, merge, sleep, chan, go, put, take, clone, close, CLOSED, any } = require('../build/index')
+const { cancel, merge, sleep, chan, go, put, take, clone, close, CLOSED, any } = require('../lib/index')
 
 describe('channels', () => {
 
@@ -197,13 +197,13 @@ describe('channels', () => {
       Promise.all([ takenA, takenB ]).then(() => cb())
     })
 
-    it ('should cause all pending puts in buffer to resolve with false immediately', (cb) => {
+    it ('should NOT cause all pending puts in buffer to resolve with false immediately', () => {
       var ch = chan()
       var putted = put(ch, 2)
       close(ch)
-      putted
-        .then((val) => assert(val === false))
-        .then(cb)
+      var spy = sinon.spy()
+      putted.then(spy)
+      assert.equal(spy.called, false)
     })
   })
 

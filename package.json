@@ -2,14 +2,12 @@
   "name": "medium",
   "version": "1.0.0",
   "description": "CSP-style channel library using ES7 async/await keywords",
-  "main": "./build/index.js",
+  "main": "./lib/index.js",
   "engines": {
     "node": "7.x.x"
   },
   "scripts": {
-    "test": "mocha --watch --reporter spec --harmony",
-    "build": "flow-remove-types --out-dir build lib/",
-    "flow": "flow; test $? -eq 0 -o $? -eq 2"
+    "test": "mocha --watch --reporter spec --harmony"
   },
   "repository": {
     "type": "git",
@@ -29,11 +27,9 @@
   },
   "license": "ISC",
   "devDependencies": {
-    "flow-bin": "^0.29.0",
     "mocha": "^2.4.5",
     "sinon": "^1.15.3",
-    "transducers-js": "^0.4.174",
-    "flow-remove-types": "^1.2.1"
+    "transducers-js": "^0.4.174"
   },
   "dependencies": {
   }

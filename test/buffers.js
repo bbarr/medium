@@ -2,7 +2,7 @@
 const assert = require('assert')
 const sinon = require('sinon')
 
-const buffers = require('../build/buffers')
+const buffers = require('../lib/index').buffers
 
 var actionStub = () => { 
   return { payload: 1, resolve() { } }

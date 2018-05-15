@@ -1,6 +1,6 @@
 
 const assert = require('assert')
-const { chan, put, sleep, go, any } = require('../build/index')
+const { repeatTake, CLOSED, chan, close, take, put, sleep, go, any } = require('../lib/index')
 
 
 describe('bugs reports', () => {
@@ -22,6 +22,19 @@ describe('bugs reports', () => {
 
         assert.equal(v, 123)
       }).then(cb)
+    })
+  })
+  
+  describe('https://github.com/bbarr/medium/issues/15', () => {
+
+    it('should not purge values from buffer after closing channel', async () => {
+
+      const ch = chan()
+
+      put(ch, 'foo')
+      close(ch)
+      const result = await take(ch)
+      assert.equal(result, 'foo')
     })
   })
 })
