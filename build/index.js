@@ -10,8 +10,8 @@ const buffers = _buffers
 
 function chan(bufferOrN               , xduce         , opts         = {})          {
 
-  const buffer = typeof bufferOrN === 'number' ? 
-    _buffers.fixed(bufferOrN) : 
+  const buffer = typeof bufferOrN === 'number' ?
+    _buffers.fixed(bufferOrN) :
     bufferOrN || _buffers.base()
 
   const ch = {
@@ -28,17 +28,12 @@ function chan(bufferOrN               , xduce         , opts         = {})      
 }
 
 function take(ch         )                {
-
   var take = createAction()
-
-  if (ch.isClosed) {
-    take.resolve(CLOSED)
-    return take.promise
-  }
 
   var put = ch.buffer.shift()
 
   // allow buffers to return promises for persistent channels
+  // TODO
   if (put && put.then) {
     return put.then(_put => {
       run(ch, _put, take)
@@ -49,6 +44,7 @@ function take(ch         )                {
   if (put) {
     run(ch, put, take)
   } else {
+    if (ch.isClosed) take.resolve(CLOSED)
     ch.takes.push(take)
   }
 
@@ -87,8 +83,8 @@ function cancel(ch         , promise              )        {
 
   // cancel takes
   const pendingTakeI = findIndexByProp('promise', promise, ch.takes)
-  if (isDefined(pendingTakeI)) 
-    ch.takes.splice(pendingTakeI, 1) 
+  if (isDefined(pendingTakeI))
+    ch.takes.splice(pendingTakeI, 1)
 
   // cancel puts
   const pendingPutI = findIndexByProp('promise', promise, ch.buffer.unreleased)
@@ -98,9 +94,6 @@ function cancel(ch         , promise              )        {
 
 function close(ch         )           {
   var currPut;
-  while (currPut = ch.buffer.shift()) {
-    currPut.resolve(false)
-  }
   ch.takes.forEach((t) => t.resolve(CLOSED))
   ch.isClosed = true
   return ch
@@ -165,7 +158,7 @@ function any(...ports            )                {
 
   const alreadyReady = ports.filter(isResolvable)
 
-  if (alreadyReady.length > 0) 
+  if (alreadyReady.length > 0)
     return resolveLazyPuts(random(alreadyReady))
 
   return new Promise(res => {
