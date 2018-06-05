@@ -4,7 +4,7 @@
   "description": "CSP-style channel library using ES7 async/await keywords",
   "main": "./lib/index.js",
   "engines": {
-    "node": "7.x.x"
+    "node": ">=7.0.0"
   },
   "scripts": {
     "test": "mocha --watch --reporter spec --harmony"
