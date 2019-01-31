@@ -27,10 +27,10 @@
   },
   "license": "ISC",
   "devDependencies": {
+    "kue": "^0.11.6",
     "mocha": "^2.4.5",
     "sinon": "^1.15.3",
     "transducers-js": "^0.4.174"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }
