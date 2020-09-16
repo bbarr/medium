@@ -1,13 +1,13 @@
 {
   "name": "medium",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "CSP-style channel library using ES7 async/await keywords",
   "main": "./lib/index.js",
   "engines": {
     "node": ">=13.0.0"
   },
   "scripts": {
-    "test": "node test/boot.js"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -22,14 +22,12 @@
   ],
   "author": {
     "name": "Brendan Barr",
-    "email": "bbarr1384@gmail.com",
-    "url": "http://replwithoutacause.com"
+    "email": "brendan@brendanbarr.com",
+    "url": "http://brendanbarr.com"
   },
   "license": "ISC",
   "devDependencies": {
-    "sinon": "^1.15.3"
-  },
-  "dependencies": {
+    "sinon": "^1.15.3",
     "mocha": "^8.1.3"
   }
 }

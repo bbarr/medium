@@ -133,29 +133,15 @@ take(ch).then(::console.log)
 
 ```
 
-#### Transducers
-Of course, you may need to filter or modify values as they are put onto the channel. 
-Transducers are the best option here, and are fully supported using Ramda, Transducers, etc.
-
-```javascript
-import t from 'transducers-js'
-
-const shouts = chan(null, t.map(str => `${str}!!!`))
-put(shouts, 'HAI')
-take(shouts).then(::console.log)
-// LOGS: 'HAI!!!'
-```
-
 #### Building something larger
 
 Things get much more interesting though when we use async/await to better coordinate our channels.
 
 ```javascript
-import t from 'transducers-js'
 import { chan, put, take, sleep, go } from 'medium'
 
 const numbers = chan()
-const oddNumbers = chan(null, t.filter(n => n % 2))
+const oddNumbers = chan()
 
 go(async () => {
   while (true) {
@@ -166,7 +152,8 @@ go(async () => {
 go(async () => {
   while (true) {
     let n = await numbers // awaiting a channel is an implied "take"
-    await put(oddNumbers, n)
+    if (n % 2 === 1)
+      await put(oddNumbers, n)
   }
 })
 
@@ -255,10 +242,9 @@ deliberately, and not just a port from some previous effort.
 
 ## API 
 
-### chan(numOrBuffer=null, xducer=null) -> Chan
+### chan(numOrBuffer=null) -> Chan
 Creates a channel. All arguments are optional.
 **numOfBuffer** - Any number or buffer. A number is a shortcut for ```buffers.fixed(number)```.
-**xducer** - a transducer to process/filter values with.
 
 ### put(ch, val) -> Promise -> true|false
 Puts a value onto a channel. Returned promise resolves to true if successful, or false if the channel is closed.
@@ -298,12 +284,10 @@ Always resolves with a double of ```[ theResolvedValue, theSourceChannel ]```.
 All non-winning actions will be canceled so that their data does not go missing.
 
 ### repeat(async function, seed=null) -> undefined
-I don't love ```while``` loops, so I use this instead. 
-
-As a bonus, you can track state without mutations! Return a value other than false, and it will be available as the argument to your callback async function. Pass in a ```seed``` value as the second argument to repeat.
+This functions like a while loop, except you can track state using its return value. Return false to end. Return a value other than false, and it will be available as the argument to your callback async function. Pass in a ```seed``` value as the second argument to repeat.
 
 ### repeatTake(ch, async function, seed=null) -> undefined
-This is jsut like ```repeat``` above, except that before it repeats, it waits for a successful ```take``` on the given channel. Then it passes this taken value in as the first argument, with any local state being passed as the second argument.
+This is just like ```repeat``` above, except that before it repeats, it waits for a successful ```take``` on the given channel. Then it passes this taken value in as the first argument, with any local state being passed as the second argument.
 
 See the ping/pong example above to see this in action.
 
