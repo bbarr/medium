@@ -4,10 +4,10 @@
   "description": "CSP-style channel library using ES7 async/await keywords",
   "main": "./lib/index.js",
   "engines": {
-    "node": ">=7.0.0"
+    "node": ">=13.0.0"
   },
   "scripts": {
-    "test": "mocha --watch --reporter spec --harmony"
+    "test": "node test/boot.js"
   },
   "repository": {
     "type": "git",
@@ -27,10 +27,9 @@
   },
   "license": "ISC",
   "devDependencies": {
-    "mocha": "^2.4.5",
-    "sinon": "^1.15.3",
-    "transducers-js": "^0.4.174"
+    "sinon": "^1.15.3"
   },
   "dependencies": {
+    "mocha": "^8.1.3"
   }
 }

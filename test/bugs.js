@@ -2,7 +2,6 @@
 const assert = require('assert')
 const { repeatTake, CLOSED, chan, close, take, put, sleep, go, any } = require('../lib/index')
 
-
 describe('bugs reports', () => {
 
   describe('https://github.com/bbarr/medium/issues/3', () => {

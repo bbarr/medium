@@ -1,9 +1,22 @@
 
 const assert = require('assert')
 const sinon = require('sinon')
-const t = require('transducers-js')
 
-const { cancel, merge, sleep, chan, go, put, take, clone, close, CLOSED, any } = require('../lib/index')
+const { 
+  cancel, 
+  merge, 
+  sleep, 
+  chan, 
+  go, 
+  put, 
+  take, 
+  repeat,
+  repeatTake,
+  clone, 
+  close, 
+  CLOSED, 
+  any 
+} = require('../lib/index.js')
 
 describe('channels', () => {
 
@@ -13,44 +26,48 @@ describe('channels', () => {
       assert(put(chan()) instanceof Promise)
     })
 
-    it ('should by implied by simply awaiting a channel', (cb) => {
-      go(async () => {
+    it ('should by implied by simply awaiting a channel', () => {
+      return go(async () => {
         let ch = chan()
         put(ch, 1)
         let val = await ch
         assert.equal(val, 1)
-      }).then(cb)
+      })
     })
 
-    it ('should deliver oldest put value', (cb) => {
+    it ('should deliver oldest put value', () => {
+      return new Promise(res => {
 
-      var ch = chan()
-      put(ch, 1)
-      put(ch, 2)
+        var ch = chan()
+        put(ch, 1)
+        put(ch, 2)
 
-      var expected;
+        var expected;
 
-      take(ch).then((val) => expected = val)
+        take(ch).then((val) => expected = val)
 
-      setTimeout(() => {
-        assert.equal(expected, 1)
-        cb()
-      }, 100)
+        setTimeout(() => {
+          assert.equal(expected, 1)
+          res()
+        }, 100)
+      })
     })
 
-    it ('should work in async function', (cb) => {
+    it ('should work in async function', () => {
+      return new Promise(res => {
 
-      var ch = chan()
-      put(ch, 1)
-      put(ch, 2)
+        var ch = chan()
+        put(ch, 1)
+        put(ch, 2)
 
-      var test = async function() {
-        var val = await take(ch)
-        assert(val === 1)
-        cb()
-      }
+        var test = async function() {
+          var val = await take(ch)
+          assert(val === 1)
+          res()
+        }
 
-      test()
+        test()
+      })
     })
 
     it ('should work in a go-block', (cb) => {
@@ -87,23 +104,6 @@ describe('channels', () => {
 
     it ('should return a promise', () => {
       assert(put(chan()) instanceof Promise)
-    })
-
-    it ('should allow transducer to modify content', (cb) => {
-      var ch = chan(null, t.map((n) => n + 1))
-      take(ch)
-        .then((val) => assert(val === 2))
-        .then(cb)
-      put(ch, 1)
-    })
-
-    it ('should drop the put if transducer filters it out', (cb) => {
-      var ch = chan(null, t.filter((n) => n > 1))
-      take(ch)
-        .then((val) => assert(val === 2))
-        .then(cb)
-      put(ch, 1) // dropped
-      put(ch, 2)
     })
 
     it ('should delegate to buffer', () => {
@@ -154,9 +154,8 @@ describe('channels', () => {
 
     it ('should create a new chan with the same properties', () => {
       var bufferOrN = 1
-      var xduce = t.map((n) => n + 1)
       var opts = { foo: 'bar' }
-      var a = chan(bufferOrN, xduce, opts)
+      var a = chan(bufferOrN, opts)
       var b = clone(a, null, { debug: true })
       assert.equal(JSON.stringify(a), JSON.stringify(b))
     })
@@ -384,6 +383,43 @@ describe('channels', () => {
     })
   })
 
+  describe('repeat()', () => {
+    it ('should recur until false is returned', async () => {
+      const spy = sinon.spy()
+      let i = 0
+      await repeat(async () => {
+        spy()
+        i++
+        if (i === 3) return false
+      })
+      assert(spy.callCount === 3)
+    })
+    it ('should take a seed value', async () => {
+      const spy = sinon.spy()
+      await repeat(async (i) => {
+        spy()
+        if (i === 3) return false
+        else return i + 1
+      }, 1)
+      assert(spy.callCount === 3)
+    })
+  })
+
+  describe('repeatTake()', () => {
+    it ('should take() until false is returned', async () => {
+      const spy = sinon.spy()
+      const ch = chan()
+      put(ch, 'a')
+      put(ch, 'b')
+      put(ch, 'c')
+      await repeatTake(ch, async (chr) => {
+        spy()
+        if (chr === 'c') return false
+      })
+      assert(spy.callCount === 3)
+    })
+  })
+
   describe('merge()', () => {
 
     it ('should take from all inputs and put onto single output channel', (cb) => {
@@ -428,4 +464,3 @@ describe('channels', () => {
     })
   })
 })
-
