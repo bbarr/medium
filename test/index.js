@@ -459,6 +459,7 @@ describe('channels', () => {
         close(b)
         close(c)
       })
+      .then(() => sleep(0))
       .then(() => assert.equal(merged.isClosed, true))
       .then(cb)
     })
