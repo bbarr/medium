@@ -1,9 +1,7 @@
 
-import channels from '../lib/index'
+const { go, chan, take, put, sleep } = require('../lib/index')
 
-var { go, chan, take, put, sleep } = channels
-
-var ch = chan(2)
+const ch = chan(2)
 
 go(async function() {
 

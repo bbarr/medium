@@ -1,5 +1,5 @@
 
-import { chan, go, put, close, take, sleep, repeat, repeatTake, CLOSED } from '../lib/index'
+const { chan, go, put, close, take, sleep, repeat, repeatTake, CLOSED } require('../lib/index')
 
 let player = async (name, table) => {
   repeatTake(table, async (ball) => {

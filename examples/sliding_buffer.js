@@ -1,9 +1,7 @@
 
-import channels from '../lib/index'
+const { go, chan, take, put, sleep, buffers } = require('../lib/index')
 
-var { go, chan, take, put, sleep, buffers } = channels
-
-var ch = chan(buffers.sliding(2))
+const ch = chan(buffers.sliding(2))
 
 go(async function() {
   await sleep(1000)
