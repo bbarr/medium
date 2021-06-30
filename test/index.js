@@ -451,22 +451,21 @@ describe('channels', () => {
       }).then(cb)
     })
 
-    it ('should close output channel when all inputs are closed', (cb) => {
+    it ('should close output channel when all inputs are closed', async () => {
 
       var a = chan()
       var b = chan()
       var c = chan()
       var merged = merge(a, b, c)
       
-      go(async () => {
-        assert.equal(merged.isClosed, false)
-        close(a)
-        close(b)
-        close(c)
-      })
-      .then(() => sleep(0))
-      .then(() => assert.equal(merged.isClosed, true))
-      .then(cb)
+      assert.equal(merged.isClosed, false)
+      close(a)
+      close(b)
+      close(c)
+
+      await sleep(0)
+
+      assert.equal(merged.isClosed, true)
     })
   })
 })
