@@ -49,20 +49,20 @@ Channels are queues, you can ```put``` things onto them and ```take``` things of
 ```javascript
 const ch1 = chan()
 put(ch1, 1)
-take(ch1).then(::console.log)
+take(ch1).then(console.log)
 // LOGS: 1
 
-take(ch1).then(::console.log)
+take(ch1).then(console.log)
 put(ch1, 2)
 // LOGS: 2
 
 // Notice how it doesn't matter what order the take and put occur in. This is the secret sauce of coordinating asynchronous activites.
 
-take(ch1).then(::console.log)
+take(ch1).then(console.log)
 close(ch1)
 // LOGS: CLOSED
 
-put(ch1, 3).then(::console.log)
+put(ch1, 3).then(console.log)
 // LOGS: false
 ```
 
@@ -86,7 +86,7 @@ An example of a different buffer would be a "fixed" buffer, which has N slots fo
 const ch = chan()
 const fixedCh = chan(buffers.fixed(2)) // or shortcut with chan(2)
 
-put(ch, 1).then(::console.log)
+put(ch, 1).then(console.log)
 // LOGS NOTHING
 
 put(fixedCh, 1).then(() => console.log('put 1'))
@@ -96,7 +96,7 @@ put(fixedCh, 2).then(() => console.log('put 2'))
 put(fixedCh, 3).then(() => console.log('put 3'))
 // LOGS NOTHING
 
-take(fixedCh).then(::console.log)
+take(fixedCh).then(console.log)
 // LOGS: 1
 // LOGS: put 3
 
@@ -110,11 +110,11 @@ const ch = chan(buffers.dropping(2))
 put(ch, 1)
 put(ch, 2)
 put(ch, 3) // this is dropped
-take(ch).then(::console.log)
+take(ch).then(console.log)
 // LOGS: 1
-take(ch).then(::console.log)
+take(ch).then(console.log)
 // LOGS: 2
-take(ch).then(::console.log)
+take(ch).then(console.log)
 // LOGS NOTHING
 put(ch, 3)
 // LOGS: 3
@@ -126,9 +126,9 @@ const ch = chan(buffers.sliding(2))
 put(ch, 1)
 put(ch, 2)
 put(ch, 3) // this causes the put of 1 to be dropped
-take(ch).then(::console.log)
+take(ch).then(console.log)
 // LOGS: 2
-take(ch).then(::console.log)
+take(ch).then(console.log)
 // LOGS: 3
 
 ```
@@ -303,5 +303,3 @@ Buffer has space of ```num```. Any extra ```put```s are parked.
 Buffer simply slides across pending puts as a window of ```num``` width. So, oldest puts are dropped as new ones are added.
 ### buffers.dropping(num)
 Buffer drops, and resolves, any extra puts beyond ```num```.
-
-
